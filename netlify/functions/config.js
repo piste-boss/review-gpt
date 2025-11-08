@@ -16,11 +16,33 @@ const DEFAULT_PROMPTS = {
 
 const DEFAULT_FORM1 = {
   title: '体験の満足度を教えてください',
-  description: '星をタップして今回のサービスの満足度をお選びください。選択内容は生成されるクチコミのトーンに反映されます。',
-  inputStyle: 'stars',
-  reasonEnabled: false,
-  reasonTitle: 'よろしければ理由をお聞かせ下さい',
-  reasonDescription: '任意入力です。感じたことや具体的なポイントがあればご記入ください。',
+  description: '星評価と設問にご協力ください。内容は生成されるクチコミのトーンに反映されます。',
+  questions: [
+    {
+      id: 'form1-q1',
+      title: '今回の満足度を教えてください',
+      required: true,
+      type: 'rating',
+      allowMultiple: false,
+      options: [],
+      ratingEnabled: false,
+      placeholder: '',
+      ratingStyle: 'stars',
+      includeInReview: true,
+    },
+    {
+      id: 'form1-q2',
+      title: '良かった点や印象に残ったことを教えてください',
+      required: false,
+      type: 'text',
+      allowMultiple: false,
+      options: [],
+      ratingEnabled: false,
+      placeholder: '例：スタッフの対応、雰囲気、味など',
+      ratingStyle: 'stars',
+      includeInReview: true,
+    },
+  ],
 }
 
 const DEFAULT_FORM2 = {
@@ -36,6 +58,8 @@ const DEFAULT_FORM2 = {
       options: ['ビジネス', '観光', '記念日', 'その他'],
       ratingEnabled: false,
       placeholder: '',
+      ratingStyle: 'stars',
+      includeInReview: true,
     },
     {
       id: 'form2-q2',
@@ -46,6 +70,39 @@ const DEFAULT_FORM2 = {
       options: ['スタッフの接客', '施設の清潔さ', 'コストパフォーマンス', '立地アクセス'],
       ratingEnabled: false,
       placeholder: '',
+      ratingStyle: 'stars',
+      includeInReview: true,
+    },
+  ],
+}
+
+const DEFAULT_FORM3 = {
+  title: '詳細アンケートにご協力ください',
+  description: '選択式と自由入力の設問で体験を詳しく共有してください。',
+  questions: [
+    {
+      id: 'form3-q1',
+      title: '担当スタッフの対応はいかがでしたか',
+      required: true,
+      type: 'rating',
+      allowMultiple: false,
+      options: [],
+      ratingEnabled: false,
+      placeholder: '',
+      ratingStyle: 'stars',
+      includeInReview: true,
+    },
+    {
+      id: 'form3-q2',
+      title: '特に印象に残ったポイントを教えてください',
+      required: false,
+      type: 'text',
+      allowMultiple: false,
+      options: [],
+      ratingEnabled: false,
+      placeholder: '例：雰囲気、メニュー、スタッフなど',
+      ratingStyle: 'stars',
+      includeInReview: true,
     },
   ],
 }
@@ -65,8 +122,11 @@ const sanitizeBooleanFlag = (value, fallback = false) => {
 const sanitizeQuestionType = (value) => {
   if (value === 'checkbox') return 'checkbox'
   if (value === 'text') return 'text'
+  if (value === 'rating') return 'rating'
   return 'dropdown'
 }
+
+const sanitizeRatingStyle = (value) => (value === 'numbers' ? 'numbers' : 'stars')
 
 const sanitizeOptionsArray = (options) => {
   if (!Array.isArray(options)) return []
@@ -75,27 +135,36 @@ const sanitizeOptionsArray = (options) => {
     .filter((option) => option.length > 0)
 }
 
-const sanitizeForm2Questions = (questions, fallbackQuestions = DEFAULT_FORM2.questions) => {
+const sanitizeFormQuestions = (questions, fallbackQuestions = []) => {
   if (!Array.isArray(questions)) return fallbackQuestions
 
   const sanitized = questions
     .map((question, index) => {
-      const fallbackQuestion = fallbackQuestions[index] || DEFAULT_FORM2.questions[index] || {}
+      const fallbackQuestion = fallbackQuestions[index] || {}
       const options = sanitizeOptionsArray(question?.options)
       const fallbackOptions = sanitizeOptionsArray(fallbackQuestion.options)
 
       const id =
         sanitizeString(question?.id) ||
         sanitizeString(fallbackQuestion.id) ||
-        `form2-q-${index + 1}-${Date.now()}`
+        `survey-q-${index + 1}-${Date.now()}`
 
       const type = sanitizeQuestionType(question?.type || fallbackQuestion.type)
-      const normalizedOptions =
-        type === 'text' ? [] : options.length > 0 ? options : fallbackOptions
+      const requiresOptions = type === 'dropdown' || type === 'checkbox'
+      const normalizedOptions = requiresOptions
+        ? options.length > 0
+          ? options
+          : fallbackOptions
+        : []
 
-      if (type !== 'text' && normalizedOptions.length === 0) {
+      if (requiresOptions && normalizedOptions.length === 0) {
         return null
       }
+
+      const ratingStyle =
+        type === 'rating'
+          ? sanitizeRatingStyle(question?.ratingStyle || fallbackQuestion.ratingStyle || 'stars')
+          : 'stars'
 
       return {
         id,
@@ -107,8 +176,19 @@ const sanitizeForm2Questions = (questions, fallbackQuestions = DEFAULT_FORM2.que
             ? sanitizeBooleanFlag(question?.allowMultiple, fallbackQuestion.allowMultiple ?? false)
             : false,
         options: normalizedOptions,
-        ratingEnabled: sanitizeBooleanFlag(question?.ratingEnabled, fallbackQuestion.ratingEnabled ?? false),
-        placeholder: sanitizeString(question?.placeholder ?? fallbackQuestion.placeholder ?? ''),
+        ratingEnabled:
+          type === 'rating'
+            ? false
+            : sanitizeBooleanFlag(question?.ratingEnabled, fallbackQuestion.ratingEnabled ?? false),
+        ratingStyle,
+        placeholder:
+          type === 'text'
+            ? sanitizeString(question?.placeholder ?? fallbackQuestion.placeholder ?? '')
+            : '',
+        includeInReview: sanitizeBooleanFlag(
+          question?.includeInReview,
+          fallbackQuestion.includeInReview ?? true,
+        ),
       }
     })
     .filter(Boolean)
@@ -140,6 +220,7 @@ const DEFAULT_CONFIG = {
   },
   form1: DEFAULT_FORM1,
   form2: DEFAULT_FORM2,
+  form3: DEFAULT_FORM3,
   updatedAt: null,
 }
 
@@ -184,8 +265,6 @@ const mergePrompts = (incoming = {}, fallback = DEFAULT_PROMPTS) =>
     return acc
   }, {})
 
-const sanitizeInputStyle = (value) => (value === 'numbers' ? 'numbers' : 'stars')
-
 const mergeWithDefault = (config = {}, fallback = DEFAULT_CONFIG) => {
   const mergedLabels = {
     ...DEFAULT_CONFIG.labels,
@@ -214,29 +293,17 @@ const mergeWithDefault = (config = {}, fallback = DEFAULT_CONFIG) => {
   const mergedBranding = {
     faviconDataUrl: sanitizeString(config.branding?.faviconDataUrl ?? fallback.branding?.faviconDataUrl),
   }
-  const mergedForm1 = {
-    title: sanitizeString(config.form1?.title ?? fallback.form1?.title ?? DEFAULT_FORM1.title),
-    description: sanitizeString(config.form1?.description ?? fallback.form1?.description ?? DEFAULT_FORM1.description),
-    inputStyle: sanitizeInputStyle(config.form1?.inputStyle ?? fallback.form1?.inputStyle ?? DEFAULT_FORM1.inputStyle),
-    reasonEnabled: sanitizeBooleanFlag(
-      config.form1?.reasonEnabled,
-      fallback.form1?.reasonEnabled ?? DEFAULT_FORM1.reasonEnabled,
+  const mergeForm = (key, defaults) => ({
+    title: sanitizeString(config[key]?.title ?? fallback[key]?.title ?? defaults.title),
+    description: sanitizeString(config[key]?.description ?? fallback[key]?.description ?? defaults.description),
+    questions: sanitizeFormQuestions(
+      config[key]?.questions,
+      fallback[key]?.questions ?? defaults.questions,
     ),
-    reasonTitle: sanitizeString(
-      config.form1?.reasonTitle ?? fallback.form1?.reasonTitle ?? DEFAULT_FORM1.reasonTitle,
-    ),
-    reasonDescription: sanitizeString(
-      config.form1?.reasonDescription ?? fallback.form1?.reasonDescription ?? DEFAULT_FORM1.reasonDescription,
-    ),
-  }
-  const mergedForm2 = {
-    title: sanitizeString(config.form2?.title ?? fallback.form2?.title ?? DEFAULT_FORM2.title),
-    description: sanitizeString(config.form2?.description ?? fallback.form2?.description ?? DEFAULT_FORM2.description),
-    questions: sanitizeForm2Questions(
-      config.form2?.questions,
-      fallback.form2?.questions ?? DEFAULT_FORM2.questions,
-    ),
-  }
+  })
+  const mergedForm1 = mergeForm('form1', DEFAULT_FORM1)
+  const mergedForm2 = mergeForm('form2', DEFAULT_FORM2)
+  const mergedForm3 = mergeForm('form3', DEFAULT_FORM3)
 
   return {
     ...DEFAULT_CONFIG,
@@ -248,6 +315,7 @@ const mergeWithDefault = (config = {}, fallback = DEFAULT_CONFIG) => {
     branding: mergedBranding,
     form1: mergedForm1,
     form2: mergedForm2,
+    form3: mergedForm3,
     updatedAt: config.updatedAt || fallback.updatedAt || DEFAULT_CONFIG.updatedAt,
   }
 }

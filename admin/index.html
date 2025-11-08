@@ -33,6 +33,7 @@
           <button type="button" class="admin__tab" data-tab-target="ai">AI設定</button>
           <button type="button" class="admin__tab" data-tab-target="form1">form1</button>
           <button type="button" class="admin__tab" data-tab-target="form2">form2</button>
+          <button type="button" class="admin__tab" data-tab-target="form3">form3</button>
           <button type="button" class="admin__tab" data-tab-target="prompts">プロンプト設定</button>
         </nav>
         <form id="config-form" class="admin__form">
@@ -179,56 +180,24 @@
                   <textarea
                     name="form1Lead"
                     rows="3"
-                    placeholder="星をタップして今回のサービスの満足度をお選びください。"
+                    placeholder="星や選択式の設問に回答してください。内容は口コミ生成に活用されます。"
                   ></textarea>
                 </label>
               </div>
             </section>
-            <section class="admin__card">
-              <h2>入力スタイル</h2>
-              <p class="admin__hint">星アイコンまたは数字ボタンから選択できます。</p>
-              <div class="admin__choices">
-                <label class="admin__choice">
-                  <input type="radio" name="form1Mode" value="stars" checked />
-                  <span>星（★）をタップして選択</span>
-                </label>
-                <label class="admin__choice">
-                  <input type="radio" name="form1Mode" value="numbers" />
-                  <span>数字（1〜5）ボタンで選択</span>
-                </label>
+            <section class="admin__card admin__card--questions">
+              <div class="admin__card-heading">
+                <h2>設問</h2>
               </div>
-            </section>
-            <section class="admin__card">
-              <h2>理由入力欄</h2>
-              <p class="admin__hint">任意のコメント欄を表示したい場合に有効化します。ON/OFF と文言をまとめて設定できます。</p>
-              <label class="admin__toggle">
-                <span class="admin__toggle-label">理由入力欄を表示する</span>
-                <span class="admin__toggle-control">
-                  <input type="checkbox" name="form1ReasonEnabled" class="admin__toggle-input" />
-                  <span class="admin__toggle-track" aria-hidden="true">
-                    <span class="admin__toggle-thumb"></span>
-                  </span>
-                  <span class="admin__toggle-status" data-role="reason-toggle-status">OFF</span>
-                </span>
-              </label>
-              <div class="admin__fields admin__fields--single">
-                <label class="admin__field">
-                  <span class="admin__field-label">理由タイトル</span>
-                  <input
-                    type="text"
-                    name="form1ReasonTitle"
-                    placeholder="よろしければ理由をお聞かせ下さい"
-                    autocomplete="off"
-                  />
-                </label>
-                <label class="admin__field">
-                  <span class="admin__field-label">理由説明文</span>
-                  <textarea
-                    name="form1ReasonLead"
-                    rows="3"
-                    placeholder="任意入力です。感じたことや具体的なポイントがあればご記入ください。"
-                  ></textarea>
-                </label>
+              <p class="admin__hint">
+                form2/3と同じ形式で、質問文や回答形式（ドロップダウン / チェックボックス / テキスト入力 / 数字選択）を設定できます。
+              </p>
+              <div class="admin__question-list" data-role="form1-question-list"></div>
+              <div class="admin__question-actions">
+                <button type="button" class="admin__icon-button" data-role="form1-add-question">
+                  <span aria-hidden="true">＋</span>
+                  <span>設問を追加</span>
+                </button>
               </div>
             </section>
           </section>
@@ -258,15 +227,56 @@
             <section class="admin__card admin__card--questions">
               <div class="admin__card-heading">
                 <h2>設問</h2>
+              </div>
+              <p class="admin__hint">
+                設問ごとに質問文や選択肢、回答形式（ドロップダウン / チェックボックス / テキスト入力 / 数字選択）を設定できます。数字選択では星 / 数字の表示を切り替えられます。
+              </p>
+              <div class="admin__question-list" data-role="form2-question-list"></div>
+              <div class="admin__question-actions">
                 <button type="button" class="admin__icon-button" data-role="form2-add-question">
                   <span aria-hidden="true">＋</span>
                   <span>設問を追加</span>
                 </button>
               </div>
+            </section>
+          </section>
+          <section class="admin__panel" data-tab-panel="form3">
+            <section class="admin__card">
+              <h2>form3表示文言</h2>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__field">
+                  <span class="admin__field-label">タイトル</span>
+                  <input
+                    type="text"
+                    name="form3Title"
+                    placeholder="詳細アンケートにご協力ください"
+                    autocomplete="off"
+                  />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">リード文</span>
+                  <textarea
+                    name="form3Lead"
+                    rows="3"
+                    placeholder="感じたことを詳しく教えてください。選択式・自由入力の設問があります。"
+                  ></textarea>
+                </label>
+              </div>
+            </section>
+            <section class="admin__card admin__card--questions">
+              <div class="admin__card-heading">
+                <h2>設問</h2>
+              </div>
               <p class="admin__hint">
-                設問ごとに質問文や選択肢、回答形式（ドロップダウン / チェックボックス / テキスト入力）、星評価の有無を設定できます。
+                form2と同様に設問ごとに質問文や選択肢、回答形式（ドロップダウン / チェックボックス / テキスト入力 / 数字選択）を設定できます。
               </p>
-              <div class="admin__question-list" data-role="form2-question-list"></div>
+              <div class="admin__question-list" data-role="form3-question-list"></div>
+              <div class="admin__question-actions">
+                <button type="button" class="admin__icon-button" data-role="form3-add-question">
+                  <span aria-hidden="true">＋</span>
+                  <span>設問を追加</span>
+                </button>
+              </div>
             </section>
           </section>
           <section class="admin__panel" data-tab-panel="prompts">

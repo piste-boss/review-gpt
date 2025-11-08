@@ -1,30 +1,96 @@
 const CONFIG_CACHE_KEY = 'oisoya_review_config_cache'
 
-const DEFAULT_FORM2 = {
-  title: '体験に関するアンケートにご協力ください',
-  description: '該当する項目を選択してください。複数回答可の設問はチェックマークで選べます。',
-  questions: [
-    {
-      id: 'form2-q1',
-      title: '今回のご利用目的を教えてください',
-      required: true,
-      type: 'dropdown',
-      allowMultiple: false,
-      options: ['ビジネス', '観光', '記念日', 'その他'],
-      ratingEnabled: false,
-      placeholder: '',
-    },
-    {
-      id: 'form2-q2',
-      title: '特に満足したポイントを教えてください',
-      required: false,
-      type: 'checkbox',
-      allowMultiple: true,
-      options: ['スタッフの接客', '施設の清潔さ', 'コストパフォーマンス', '立地アクセス'],
-      ratingEnabled: false,
-      placeholder: '',
-    },
-  ],
+const DEFAULT_FORMS = {
+  form1: {
+    title: '体験の満足度を教えてください',
+    description: '星評価と設問にご協力ください。内容は生成されるクチコミのトーンに反映されます。',
+    questions: [
+      {
+        id: 'form1-q1',
+        title: '今回の満足度を教えてください',
+        required: true,
+        type: 'rating',
+        allowMultiple: false,
+        options: [],
+        ratingEnabled: false,
+        placeholder: '',
+        ratingStyle: 'stars',
+        includeInReview: true,
+      },
+      {
+        id: 'form1-q2',
+        title: '良かった点や印象に残ったことを教えてください',
+        required: false,
+        type: 'text',
+        allowMultiple: false,
+        options: [],
+        ratingEnabled: false,
+        placeholder: '例：スタッフの対応、雰囲気、味など',
+        ratingStyle: 'stars',
+        includeInReview: true,
+      },
+    ],
+  },
+  form2: {
+    title: '体験に関するアンケートにご協力ください',
+    description: '該当する項目を選択してください。複数回答可の設問はチェックマークで選べます。',
+    questions: [
+      {
+        id: 'form2-q1',
+        title: '今回のご利用目的を教えてください',
+        required: true,
+        type: 'dropdown',
+        allowMultiple: false,
+        options: ['ビジネス', '観光', '記念日', 'その他'],
+        ratingEnabled: false,
+        placeholder: '',
+        ratingStyle: 'stars',
+        includeInReview: true,
+      },
+      {
+        id: 'form2-q2',
+        title: '特に満足したポイントを教えてください',
+        required: false,
+        type: 'checkbox',
+        allowMultiple: true,
+        options: ['スタッフの接客', '施設の清潔さ', 'コストパフォーマンス', '立地アクセス'],
+        ratingEnabled: false,
+        placeholder: '',
+        ratingStyle: 'stars',
+        includeInReview: true,
+      },
+    ],
+  },
+  form3: {
+    title: '詳細アンケートにご協力ください',
+    description: '選択式と自由入力で体験の詳細をお聞きします。わかる範囲でお答えください。',
+    questions: [
+      {
+        id: 'form3-q1',
+        title: '担当スタッフの対応はいかがでしたか',
+        required: true,
+        type: 'rating',
+        allowMultiple: false,
+        options: [],
+        ratingEnabled: false,
+        placeholder: '',
+        ratingStyle: 'stars',
+        includeInReview: true,
+      },
+      {
+        id: 'form3-q2',
+        title: '特に印象に残ったポイントを教えてください',
+        required: false,
+        type: 'text',
+        allowMultiple: false,
+        options: [],
+        ratingEnabled: false,
+        placeholder: '例：雰囲気、メニュー、スタッフなど',
+        ratingStyle: 'stars',
+        includeInReview: true,
+      },
+    ],
+  },
 }
 
 const RATING_SCALE = [1, 2, 3, 4, 5]
@@ -34,17 +100,17 @@ if (!app) {
   throw new Error('#form2-app が見つかりません。')
 }
 
+const FORM_KEY = app.dataset.formKey || 'form2'
+const DEFAULT_FORM = DEFAULT_FORMS[FORM_KEY] || DEFAULT_FORMS.form2
+
 const titleEl = app.querySelector('[data-role="title"]')
 const leadEl = app.querySelector('[data-role="lead"]')
 const questionListEl = app.querySelector('[data-role="question-list"]')
 const statusEl = app.querySelector('[data-role="status"]')
 const submitButton = app.querySelector('[data-role="submit"]')
-const reviewToggleInput = app.querySelector('[data-role="review-toggle"]')
-const reviewToggleStatusEl = app.querySelector('[data-role="review-toggle-status"]')
 
 const questionRefs = new Map()
-let currentFormConfig = DEFAULT_FORM2
-let includeInReview = true
+let currentFormConfig = DEFAULT_FORM
 
 const readCachedConfig = () => {
   try {
@@ -92,21 +158,25 @@ const setQuestionError = (statusNode, message) => {
 const normalizeQuestionType = (value) => {
   if (value === 'checkbox') return 'checkbox'
   if (value === 'text') return 'text'
+  if (value === 'rating') return 'rating'
   return 'dropdown'
 }
 
+const normalizeRatingStyle = (value) => (value === 'numbers' ? 'numbers' : 'stars')
+
 const normalizeQuestions = (questions = []) => {
-  if (!Array.isArray(questions)) return DEFAULT_FORM2.questions
+  if (!Array.isArray(questions)) return DEFAULT_FORM.questions
   const normalized = questions
     .map((question, index) => {
       const options = Array.isArray(question?.options)
         ? question.options.map((option) => (typeof option === 'string' ? option.trim() : '')).filter(Boolean)
         : []
       const type = normalizeQuestionType(question.type)
-      if (type !== 'text' && options.length === 0) {
+      const requiresOptions = type === 'dropdown' || type === 'checkbox'
+      if (requiresOptions && options.length === 0) {
         return null
       }
-      const normalizedOptions = type === 'text' ? [] : options
+      const normalizedOptions = requiresOptions ? options : []
       return {
         id: typeof question.id === 'string' && question.id.trim() ? question.id : `form2-q-${index + 1}`,
         title: typeof question.title === 'string' && question.title.trim() ? question.title : `設問${index + 1}`,
@@ -114,19 +184,27 @@ const normalizeQuestions = (questions = []) => {
         type,
         allowMultiple: type === 'checkbox' ? Boolean(question.allowMultiple) : false,
         options: normalizedOptions,
-        ratingEnabled: Boolean(question.ratingEnabled),
-        placeholder: typeof question.placeholder === 'string' ? question.placeholder : '',
+        ratingEnabled: type !== 'rating' && Boolean(question.ratingEnabled),
+        ratingStyle: type === 'rating' ? normalizeRatingStyle(question.ratingStyle) : 'stars',
+        placeholder: type === 'text' && typeof question.placeholder === 'string' ? question.placeholder : '',
+        includeInReview: question.includeInReview !== false,
       }
     })
     .filter(Boolean)
 
-  return normalized.length > 0 ? normalized : DEFAULT_FORM2.questions
+  return normalized.length > 0 ? normalized : DEFAULT_FORM.questions
 }
 
 const describeQuestion = (question) => {
   if (question.type === 'checkbox') {
     if (question.allowMultiple) return '該当する項目をすべて選択してください。'
     return 'もっとも当てはまる項目を1つ選択してください。'
+  }
+  if (question.type === 'rating') {
+    if (question.ratingStyle === 'numbers') {
+      return '1〜5の数字から今回の評価を選択してください。'
+    }
+    return '星マークをタップして今回の評価を選択してください。'
   }
   if (question.type === 'text') {
     return '自由入力欄です。感じたことをそのままご記入ください。'
@@ -217,14 +295,18 @@ const highlightRatingButtons = (buttons, score) => {
   })
 }
 
-const buildRatingControls = () => {
+const buildRatingControls = ({ mode = 'stars' } = {}) => {
   const container = document.createElement('div')
   container.className = 'form2__rating'
 
-  const label = document.createElement('p')
-  label.className = 'form2__rating-label'
-  label.textContent = '星評価（任意）'
-  container.appendChild(label)
+  const guides = document.createElement('div')
+  guides.className = 'form2__rating-guides'
+  const lowGuide = document.createElement('span')
+  lowGuide.textContent = mode === 'numbers' ? '1（低い）' : '低い'
+  const highGuide = document.createElement('span')
+  highGuide.textContent = mode === 'numbers' ? '5（高い）' : '高い'
+  guides.append(lowGuide, highGuide)
+  container.appendChild(guides)
 
   const buttonsWrap = document.createElement('div')
   buttonsWrap.className = 'form2__rating-buttons'
@@ -236,7 +318,13 @@ const buildRatingControls = () => {
     button.className = 'form2__rating-button'
     button.dataset.score = String(score)
     button.setAttribute('aria-label', `${score}点`)
-    button.innerHTML = '<span aria-hidden="true">★</span>'
+    if (mode === 'numbers') {
+      button.classList.add('form2__rating-button--number')
+      button.textContent = String(score)
+    } else {
+      button.classList.add('form2__rating-button--star')
+      button.innerHTML = '<span aria-hidden="true">★</span>'
+    }
     buttonsWrap.appendChild(button)
     return button
   })
@@ -276,7 +364,33 @@ const renderQuestions = () => {
     statusNode.className = 'form2__question-status'
     statusNode.setAttribute('hidden', '')
 
-    if (question.type === 'dropdown') {
+    if (question.type === 'rating') {
+      const ratingContent = buildRatingControls({
+        mode: question.ratingStyle,
+      })
+      questionCard.appendChild(ratingContent.container)
+      const ref = {
+        type: 'rating',
+        required: question.required,
+        allowMultiple: false,
+        selectEl: null,
+        inputs: [],
+        textEl: null,
+        statusEl: statusNode,
+        rating: {
+          currentScore: 0,
+          buttons: ratingContent.buttons,
+        },
+      }
+      questionRefs.set(question.id, ref)
+      ratingContent.buttons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const score = Number(button.dataset.score)
+          ref.rating.currentScore = score
+          highlightRatingButtons(ratingContent.buttons, score)
+        })
+      })
+    } else if (question.type === 'dropdown') {
       const select = buildDropdown(question, statusNode)
       questionCard.appendChild(select)
       questionRefs.set(question.id, {
@@ -317,21 +431,23 @@ const renderQuestions = () => {
       })
     }
 
-    if (question.ratingEnabled) {
+    if (question.type !== 'rating' && question.ratingEnabled) {
       const ratingContent = buildRatingControls()
       questionCard.appendChild(ratingContent.container)
       const ref = questionRefs.get(question.id)
-      ref.rating = {
-        currentScore: 0,
-        buttons: ratingContent.buttons,
-      }
-      ratingContent.buttons.forEach((button) => {
-        button.addEventListener('click', () => {
-          const score = Number(button.dataset.score)
-          ref.rating.currentScore = score
-          highlightRatingButtons(ratingContent.buttons, score)
+      if (ref) {
+        ref.rating = {
+          currentScore: 0,
+          buttons: ratingContent.buttons,
+        }
+        ratingContent.buttons.forEach((button) => {
+          button.addEventListener('click', () => {
+            const score = Number(button.dataset.score)
+            ref.rating.currentScore = score
+            highlightRatingButtons(ratingContent.buttons, score)
+          })
         })
-      })
+      }
     }
 
     questionCard.appendChild(statusNode)
@@ -341,24 +457,19 @@ const renderQuestions = () => {
 
 const applyFormContent = (formConfig = {}) => {
   currentFormConfig = {
-    ...DEFAULT_FORM2,
+    ...DEFAULT_FORM,
     ...formConfig,
     questions: normalizeQuestions(formConfig.questions),
   }
 
   if (titleEl) {
-    titleEl.textContent = currentFormConfig.title || DEFAULT_FORM2.title
+    titleEl.textContent = currentFormConfig.title || DEFAULT_FORM.title
   }
   if (leadEl) {
-    leadEl.textContent = currentFormConfig.description || DEFAULT_FORM2.description
+    leadEl.textContent = currentFormConfig.description || DEFAULT_FORM.description
   }
 
   renderQuestions()
-}
-
-const updateReviewToggleStatus = () => {
-  if (!reviewToggleStatusEl) return
-  reviewToggleStatusEl.textContent = includeInReview ? 'ON' : 'OFF'
 }
 
 const loadConfig = async () => {
@@ -369,8 +480,9 @@ const loadConfig = async () => {
     }
     const payload = await response.json()
     writeCachedConfig(payload)
-    if (payload?.form2) {
-      applyFormContent(payload.form2)
+    const formConfig = payload?.[FORM_KEY]
+    if (formConfig) {
+      applyFormContent(formConfig)
     }
   } catch (error) {
     console.warn(error)
@@ -378,23 +490,15 @@ const loadConfig = async () => {
 }
 
 const initializeForm = () => {
-  includeInReview = reviewToggleInput?.checked ?? true
-  updateReviewToggleStatus()
-
   const cached = readCachedConfig()
-  if (cached?.form2) {
-    applyFormContent(cached.form2)
+  if (cached?.[FORM_KEY]) {
+    applyFormContent(cached[FORM_KEY])
   } else {
-    applyFormContent(DEFAULT_FORM2)
+    applyFormContent(DEFAULT_FORM)
   }
 
   loadConfig()
 }
-
-reviewToggleInput?.addEventListener('change', () => {
-  includeInReview = Boolean(reviewToggleInput.checked)
-  updateReviewToggleStatus()
-})
 
 const collectAnswers = () => {
   const errors = []
@@ -420,6 +524,13 @@ const collectAnswers = () => {
         selected.splice(1)
       }
       value = ref.allowMultiple ? selected : selected[0] || ''
+    } else if (ref.type === 'rating') {
+      const score = ref.rating?.currentScore ?? 0
+      if (ref.required && !score) {
+        errors.push(questionId)
+        setQuestionError(ref.statusEl, '評価を選択してください。')
+      }
+      value = score
     } else {
       const textValue = (ref.textEl?.value || '').trim()
       if (ref.required && !textValue) {
@@ -445,10 +556,15 @@ submitButton?.addEventListener('click', () => {
     return
   }
   // eslint-disable-next-line no-console
-  console.log('form2 answers', { includeInReview, answers })
+  console.log(`${FORM_KEY} answers`, answers)
   setStatus('回答を保存しました。口コミ生成ページへ移動します。', 'success')
   window.setTimeout(() => {
-    window.location.href = '/generator/page2/index.html'
+    const redirectMap = {
+      form1: '/generator/index.html',
+      form2: '/generator/page2/index.html',
+      form3: '/generator/page3/index.html',
+    }
+    window.location.href = redirectMap[FORM_KEY] || '/generator/page2/index.html'
   }, 600)
 })
 
