@@ -212,44 +212,6 @@ const promptFields = PROMPT_CONFIGS.map(({ key }) => ({
   prompt: form.elements[`prompt_${key}_prompt`],
 }))
 
-const surveyFormConfigs = [
-  {
-    key: 'form1',
-    fields: {
-      title: form.elements.form1Title,
-      lead: form.elements.form1Lead,
-    },
-    questionListEl: app.querySelector('[data-role="form1-question-list"]'),
-    addButton: app.querySelector('[data-role="form1-add-question"]'),
-    defaults: DEFAULT_FORM1,
-  },
-  {
-    key: 'form2',
-    fields: {
-      title: form.elements.form2Title,
-      lead: form.elements.form2Lead,
-    },
-    questionListEl: app.querySelector('[data-role="form2-question-list"]'),
-    addButton: app.querySelector('[data-role="form2-add-question"]'),
-    defaults: DEFAULT_FORM2,
-  },
-  {
-    key: 'form3',
-    fields: {
-      title: form.elements.form3Title,
-      lead: form.elements.form3Lead,
-    },
-    questionListEl: app.querySelector('[data-role="form3-question-list"]'),
-    addButton: app.querySelector('[data-role="form3-add-question"]'),
-    defaults: DEFAULT_FORM3,
-  },
-]
-
-const surveyFormManagers = surveyFormConfigs.reduce((acc, config) => {
-  acc[config.key] = createSurveyFormManager(config)
-  return acc
-}, {})
-
 const cloneQuestion = (question) => ({
   ...question,
   options: Array.isArray(question.options) ? [...question.options] : [],
@@ -347,7 +309,7 @@ const createSurveyQuestion = (overrides = {}) => {
   return question
 }
 
-const createSurveyFormManager = ({ key, fields, questionListEl, addButton, defaults }) => {
+function createSurveyFormManager({ key, fields, questionListEl, addButton, defaults }) {
   const fallbackQuestions = defaults?.questions || []
   let questions = fallbackQuestions.map((question) => cloneQuestion(question))
 
@@ -679,6 +641,47 @@ const createSurveyFormManager = ({ key, fields, questionListEl, addButton, defau
     },
   }
 }
+
+const surveyFormConfigs = [
+  {
+    key: 'form1',
+    fields: {
+      title: form.elements.form1Title,
+      lead: form.elements.form1Lead,
+    },
+    questionListEl: app.querySelector('[data-role="form1-question-list"]'),
+    addButton: app.querySelector('[data-role="form1-add-question"]'),
+    defaults: DEFAULT_FORM1,
+  },
+  {
+    key: 'form2',
+    fields: {
+      title: form.elements.form2Title,
+      lead: form.elements.form2Lead,
+    },
+    questionListEl: app.querySelector('[data-role="form2-question-list"]'),
+    addButton: app.querySelector('[data-role="form2-add-question"]'),
+    defaults: DEFAULT_FORM2,
+  },
+  {
+    key: 'form3',
+    fields: {
+      title: form.elements.form3Title,
+      lead: form.elements.form3Lead,
+    },
+    questionListEl: app.querySelector('[data-role="form3-question-list"]'),
+    addButton: app.querySelector('[data-role="form3-add-question"]'),
+    defaults: DEFAULT_FORM3,
+  },
+]
+
+const surveyFormManagers = surveyFormConfigs.reduce((acc, config) => {
+  const manager = createSurveyFormManager(config)
+  if (manager) {
+    acc[config.key] = manager
+  }
+  return acc
+}, {})
 
 const inferFaviconType = (value) => {
   if (!value) return 'image/svg+xml'
