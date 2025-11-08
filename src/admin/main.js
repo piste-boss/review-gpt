@@ -51,6 +51,13 @@ const PROMPT_CONFIGS = [
   { key: 'page3', label: '生成ページ3（上級）' },
 ]
 
+const DEFAULT_FORM1 = {
+  title: '体験の満足度を教えてください',
+  description: '星をタップして今回のサービスの満足度をお選びください。選択内容は生成されるクチコミのトーンに反映されます。',
+  inputStyle: 'stars',
+  reasonEnabled: false,
+}
+
 const app = document.querySelector('#admin-app')
 if (!app) {
   throw new Error('#admin-app が見つかりません。')
@@ -78,6 +85,13 @@ const promptFields = PROMPT_CONFIGS.map(({ key }) => ({
   gasUrl: form.elements[`prompt_${key}_gasUrl`],
   prompt: form.elements[`prompt_${key}_prompt`],
 }))
+
+const form1Fields = {
+  title: form.elements.form1Title,
+  lead: form.elements.form1Lead,
+  mode: form.elements.form1Mode, // RadioNodeList
+  reasonEnabled: form.elements.form1ReasonEnabled,
+}
 
 const inferFaviconType = (value) => {
   if (!value) return 'image/svg+xml'
@@ -121,6 +135,22 @@ const brandingFields = {
   preview: app.querySelector('[data-role="favicon-preview"]'),
   removeButton: app.querySelector('[data-role="favicon-remove"]'),
 }
+
+const normalizeForm1Mode = (value) => (value === 'numbers' ? 'numbers' : 'stars')
+
+const setForm1ModeValue = (value) => {
+  if (!form1Fields.mode) return
+  form1Fields.mode.value = normalizeForm1Mode(value)
+}
+
+const getForm1ModeValue = () => normalizeForm1Mode(form1Fields.mode?.value)
+
+const setForm1ReasonValue = (enabled) => {
+  if (!form1Fields.reasonEnabled) return
+  form1Fields.reasonEnabled.checked = Boolean(enabled)
+}
+
+const getForm1ReasonValue = () => Boolean(form1Fields.reasonEnabled?.checked)
 
 const applyBrandingToUI = (value) => {
   const dataUrl = typeof value === 'string' ? value : ''
@@ -255,6 +285,16 @@ function populateForm(config) {
     if (prompt) prompt.value = promptConfig.prompt || ''
   })
 
+  const form1Config = config.form1 || DEFAULT_FORM1
+  if (form1Fields.title) {
+    form1Fields.title.value = form1Config.title || DEFAULT_FORM1.title
+  }
+  if (form1Fields.lead) {
+    form1Fields.lead.value = form1Config.description || DEFAULT_FORM1.description
+  }
+  setForm1ModeValue(form1Config.inputStyle || DEFAULT_FORM1.inputStyle)
+  setForm1ReasonValue(form1Config.reasonEnabled ?? DEFAULT_FORM1.reasonEnabled)
+
   const branding = config.branding || {}
   applyBrandingToUI(branding.faviconDataUrl || '')
 }
@@ -358,6 +398,15 @@ form.addEventListener('submit', async (event) => {
 
   payload.branding = {
     faviconDataUrl: getBrandingValue(),
+  }
+
+  const form1TitleValue = (form1Fields.title?.value || '').trim()
+  const form1LeadValue = (form1Fields.lead?.value || '').trim()
+  payload.form1 = {
+    title: form1TitleValue || DEFAULT_FORM1.title,
+    description: form1LeadValue || DEFAULT_FORM1.description,
+    inputStyle: getForm1ModeValue(),
+    reasonEnabled: getForm1ReasonValue(),
   }
 
   if (errors.length > 0) {

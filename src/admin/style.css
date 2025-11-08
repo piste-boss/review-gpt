@@ -199,6 +199,40 @@ body {
   grid-template-columns: 1fr;
 }
 
+.admin__choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.admin__choice {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.admin__choice input[type='radio'] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent-strong);
+}
+
+.admin__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.admin__toggle input[type='checkbox'] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent-strong);
+}
+
 .admin__field {
   display: flex;
   flex-direction: column;

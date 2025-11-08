@@ -147,13 +147,13 @@ body {
   color: var(--text-muted);
 }
 
-.form__stars {
+.form__ratings {
   display: flex;
   justify-content: space-between;
   gap: 0.5rem;
 }
 
-.form__star {
+.form__rating-option {
   appearance: none;
   border: none;
   background: rgba(255, 255, 255, 0.8);
@@ -167,31 +167,52 @@ body {
   transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
-.form__star:hover,
-.form__star:focus-visible {
+.form__rating-option:hover,
+.form__rating-option:focus-visible {
   outline: none;
   color: var(--accent-strong);
   background: rgba(143, 194, 49, 0.1);
 }
 
-.form__star.is-active,
-.form__star.is-active ~ .form__star {
+.form__rating-option.is-active,
+.form__rating-option.is-active ~ .form__rating-option {
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
-.form__star.is-active {
+.form__rating-option.is-active {
   color: var(--accent-strong);
   background: var(--accent-muted);
 }
 
-.form__star.is-filled {
+.form__rating-option.is-filled {
   color: var(--accent);
+}
+
+.form__rating-option--number {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-strong);
 }
 
 .form__rating-summary {
   margin: 0;
   font-weight: 600;
   color: var(--text-muted);
+}
+
+.form__textarea {
+  width: 100%;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  padding: 1rem 1.2rem;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 140px;
+  line-height: 1.6;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--text-strong);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .form__actions {

@@ -31,6 +31,7 @@
         <nav class="admin__tabs" aria-label="設定メニュー">
           <button type="button" class="admin__tab is-active" data-tab-target="labels">ルータ設定</button>
           <button type="button" class="admin__tab" data-tab-target="ai">AI設定</button>
+          <button type="button" class="admin__tab" data-tab-target="form1">フォーム1</button>
           <button type="button" class="admin__tab" data-tab-target="prompts">プロンプト設定</button>
         </nav>
         <form id="config-form" class="admin__form">
@@ -157,6 +158,52 @@
                   />
                 </label>
               </div>
+            </section>
+          </section>
+          <section class="admin__panel" data-tab-panel="form1">
+            <section class="admin__card">
+              <h2>フォーム1表示文言</h2>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__field">
+                  <span class="admin__field-label">タイトル</span>
+                  <input
+                    type="text"
+                    name="form1Title"
+                    placeholder="体験の満足度を教えてください"
+                    autocomplete="off"
+                  />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">リード文</span>
+                  <textarea
+                    name="form1Lead"
+                    rows="3"
+                    placeholder="星をタップして今回のサービスの満足度をお選びください。"
+                  ></textarea>
+                </label>
+              </div>
+            </section>
+            <section class="admin__card">
+              <h2>入力スタイル</h2>
+              <p class="admin__hint">星アイコンまたは数字ボタンから選択できます。</p>
+              <div class="admin__choices">
+                <label class="admin__choice">
+                  <input type="radio" name="form1Mode" value="stars" checked />
+                  <span>星（★）をタップして選択</span>
+                </label>
+                <label class="admin__choice">
+                  <input type="radio" name="form1Mode" value="numbers" />
+                  <span>数字（1〜5）ボタンで選択</span>
+                </label>
+              </div>
+            </section>
+            <section class="admin__card">
+              <h2>理由入力欄</h2>
+              <p class="admin__hint">任意のコメント欄を表示したい場合に有効化します。</p>
+              <label class="admin__toggle">
+                <input type="checkbox" name="form1ReasonEnabled" />
+                <span>「よろしければ理由をお聞かせ下さい」の入力欄を表示する</span>
+              </label>
             </section>
           </section>
           <section class="admin__panel" data-tab-panel="prompts">

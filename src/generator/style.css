@@ -88,6 +88,13 @@ body {
   gap: 0.8rem;
 }
 
+.generator__meta {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  letter-spacing: 0.12em;
+}
+
 .generator__brand {
   align-self: flex-start;
   padding: 0.35rem 1.25rem;

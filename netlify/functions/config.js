@@ -10,6 +10,13 @@ const DEFAULT_PROMPTS = {
   page3: { gasUrl: '', prompt: '' },
 }
 
+const DEFAULT_FORM1 = {
+  title: '体験の満足度を教えてください',
+  description: '星をタップして今回のサービスの満足度をお選びください。選択内容は生成されるクチコミのトーンに反映されます。',
+  inputStyle: 'stars',
+  reasonEnabled: false,
+}
+
 const DEFAULT_CONFIG = {
   labels: {
     beginner: '初級',
@@ -32,6 +39,7 @@ const DEFAULT_CONFIG = {
   branding: {
     faviconDataUrl: '',
   },
+  form1: DEFAULT_FORM1,
   updatedAt: null,
 }
 
@@ -76,6 +84,8 @@ const mergePrompts = (incoming = {}, fallback = DEFAULT_PROMPTS) =>
     return acc
   }, {})
 
+const sanitizeInputStyle = (value) => (value === 'numbers' ? 'numbers' : 'stars')
+
 const mergeWithDefault = (config = {}, fallback = DEFAULT_CONFIG) => {
   const mergedLabels = {
     ...DEFAULT_CONFIG.labels,
@@ -104,6 +114,12 @@ const mergeWithDefault = (config = {}, fallback = DEFAULT_CONFIG) => {
   const mergedBranding = {
     faviconDataUrl: sanitizeString(config.branding?.faviconDataUrl ?? fallback.branding?.faviconDataUrl),
   }
+  const mergedForm1 = {
+    title: sanitizeString(config.form1?.title ?? fallback.form1?.title ?? DEFAULT_FORM1.title),
+    description: sanitizeString(config.form1?.description ?? fallback.form1?.description ?? DEFAULT_FORM1.description),
+    inputStyle: sanitizeInputStyle(config.form1?.inputStyle ?? fallback.form1?.inputStyle ?? DEFAULT_FORM1.inputStyle),
+    reasonEnabled: Boolean(config.form1?.reasonEnabled ?? fallback.form1?.reasonEnabled ?? DEFAULT_FORM1.reasonEnabled),
+  }
 
   return {
     ...DEFAULT_CONFIG,
@@ -113,6 +129,7 @@ const mergeWithDefault = (config = {}, fallback = DEFAULT_CONFIG) => {
     aiSettings: mergedAiSettings,
     prompts: mergedPrompts,
     branding: mergedBranding,
+    form1: mergedForm1,
     updatedAt: config.updatedAt || fallback.updatedAt || DEFAULT_CONFIG.updatedAt,
   }
 }
