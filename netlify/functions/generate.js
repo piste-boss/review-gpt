@@ -89,7 +89,7 @@ const extractTextFromGemini = (payload) => {
     .trim()
 }
 
-export const handler = async (event) => {
+export const handler = async (event, context) => {
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 204,
@@ -114,7 +114,7 @@ export const handler = async (event) => {
   const promptKey = resolvePromptKey(requestPayload.promptKey, tierInput)
   const promptLabel = PROMPT_LABELS[promptKey] || '生成ページ'
 
-  const store = createStore()
+  const store = createStore(undefined, context)
   const config = (await store.get(CONFIG_KEY, { type: 'json' }).catch(() => null)) || {}
   const aiSettings = config.aiSettings || {}
 

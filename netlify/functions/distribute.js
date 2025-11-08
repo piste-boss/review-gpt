@@ -115,8 +115,8 @@ const persistConfig = async (store, config) => {
   })
 }
 
-export const handler = async (event) => {
-  const store = getConfigStore()
+export const handler = async (event, context) => {
+  const store = getConfigStore(context)
 
   if (event.httpMethod === 'OPTIONS') {
     return {

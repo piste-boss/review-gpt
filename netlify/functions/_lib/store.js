@@ -16,7 +16,11 @@ const getCredentials = () => {
   return { siteID, token }
 }
 
-export const createStore = (name = DEFAULT_STORE_NAME) => {
+export const createStore = (name = DEFAULT_STORE_NAME, context) => {
+  if (context?.netlify?.blobs?.getStore) {
+    return context.netlify.blobs.getStore({ name })
+  }
+
   const credentials = getCredentials()
   if (credentials) {
     return getStore({
@@ -27,4 +31,4 @@ export const createStore = (name = DEFAULT_STORE_NAME) => {
   return getStore({ name })
 }
 
-export const getConfigStore = () => createStore()
+export const getConfigStore = (context) => createStore(DEFAULT_STORE_NAME, context)
