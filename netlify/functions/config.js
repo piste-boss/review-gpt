@@ -139,8 +139,6 @@ const mergeWithDefault = (config = {}, fallback = DEFAULT_CONFIG) => {
 }
 
 export const handler = async (event, context) => {
-  console.log('context keys', Object.keys(context || {}))
-  console.log('context.netlify', Boolean(context?.netlify))
   const store = getConfigStore(context)
 
   if (event.httpMethod === 'OPTIONS') {
