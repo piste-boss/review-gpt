@@ -151,10 +151,10 @@ const getForm1ModeValue = () => normalizeForm1Mode(form1Fields.mode?.value)
 
 const setForm1ReasonValue = (enabled) => {
   if (!form1Fields.reasonEnabled) return
-  form1Fields.reasonEnabled.checked = Boolean(enabled)
+  form1Fields.reasonEnabled.value = enabled ? 'on' : 'off'
 }
 
-const getForm1ReasonValue = () => Boolean(form1Fields.reasonEnabled?.checked)
+const getForm1ReasonValue = () => (form1Fields.reasonEnabled?.value || 'off') === 'on'
 
 const applyBrandingToUI = (value) => {
   const dataUrl = typeof value === 'string' ? value : ''
