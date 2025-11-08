@@ -35,6 +35,7 @@
           <button type="button" class="admin__tab" data-tab-target="form2">form2</button>
           <button type="button" class="admin__tab" data-tab-target="form3">form3</button>
           <button type="button" class="admin__tab" data-tab-target="prompts">プロンプト設定</button>
+          <button type="button" class="admin__tab" data-tab-target="qr">QRコード作成</button>
         </nav>
         <form id="config-form" class="admin__form">
           <section class="admin__panel is-active" data-tab-panel="labels">
@@ -350,6 +351,52 @@
                     placeholder="生成時に利用する指示文を入力してください。"
                   ></textarea>
                 </label>
+              </div>
+            </section>
+          </section>
+          <section class="admin__panel" data-tab-panel="qr">
+            <section class="admin__card admin__card--qr">
+              <h2>QRコード作成</h2>
+              <p class="admin__hint">
+                トップページ・フォームページへのQRコードを作成し、PNG/JPGでダウンロードできます。紙面掲載時の想定サイズに合わせてS/M/Lから選んでください。
+              </p>
+              <div class="admin__fields admin__fields--single admin__qr-controls">
+                <label class="admin__field">
+                  <span class="admin__field-label">対象ページ</span>
+                  <select name="qrPage">
+                    <option value="top">トップページ</option>
+                    <option value="form1">Form1</option>
+                    <option value="form2">Form2</option>
+                    <option value="form3">Form3</option>
+                  </select>
+                  <span class="admin__field-hint">ローカルで表示中のドメインをもとにQRコードを生成します。</span>
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">出力サイズ</span>
+                  <select name="qrSize">
+                    <option value="s">S（256px）</option>
+                    <option value="m" selected>M（512px）</option>
+                    <option value="l">L（1024px）</option>
+                  </select>
+                  <span class="admin__field-hint">印刷サイズに応じてピクセル数を選択してください。</span>
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">ファイル形式</span>
+                  <select name="qrFormat">
+                    <option value="png" selected>PNG</option>
+                    <option value="jpg">JPG</option>
+                  </select>
+                  <span class="admin__field-hint">PNGは透過背景、JPGは白背景で出力します。</span>
+                </label>
+              </div>
+              <div class="admin__qr-preview" data-role="qr-preview">
+                <p>選択内容に応じたQRコードがここに表示されます。</p>
+              </div>
+              <div class="admin__qr-actions">
+                <button type="button" class="admin__icon-button" data-role="qr-refresh">プレビュー更新</button>
+                <button type="button" class="admin__submit admin__submit--compact" data-role="qr-download">
+                  QRコードをダウンロード
+                </button>
               </div>
             </section>
           </section>

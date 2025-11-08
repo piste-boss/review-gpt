@@ -15,6 +15,7 @@
   - ルータ設定タブ: ボタンラベルとリンクを編集。
   - AI設定タブ: Gemini モデル名、API キー、Google マップリンクを保存。
   - プロンプト設定タブ: 生成ページ 1〜3 の GAS アプリ URL とプロンプトを個別に管理。
+  - QRコード作成タブ: トップページ/Form1〜3のQRコードをPNG/JPG・S/M/Lサイズで生成しダウンロード。
 - **生成ページ**: `/generator`（ライト）、`/generator/page2`（ミディアム）、`/generator/page3`（フルシティ）。`data-prompt-key` と `data-tier` を使い、`/api/generate` が該当の GAS データとプロンプトを用いて Gemini API(v1) で文章を生成。コピー・マップ投稿導線も提供。
 - **Netlify Functions**:
   - `config`: 設定 CRUD。ラベル／リンク／AI 設定／プロンプトをまとめて管理し、Blobs に保存。
@@ -23,4 +24,3 @@
   - `upload`: Blobs 動作確認用サンプル。
 - **デザイン**: Noto Sans + Zen Maru Gothic、柔らかいピンク系のグラデーションを採用。「ライトカップ」「ミディアムカップ」「フルシティカップ」の表現で統一。
 - **ビルド＆デプロイ**: `npm run build` → `netlify deploy --prod --dir=dist` を実行済み。Netlify 環境変数 (`NETLIFY_SITE_ID`, `NETLIFY_BLOBS_TOKEN`) を設定し、管理画面で Gemini API キー等を登録すれば運用可能。
-
