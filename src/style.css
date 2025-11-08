@@ -1,0 +1,309 @@
+:root {
+  color-scheme: only light;
+  font-family: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+  --font-base: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+  --font-heading: 'Roboto', 'Noto Sans JP', sans-serif;
+  --bg: #f5f7f2;
+  --bg-hero: #eef5da;
+  --panel: #ffffff;
+  --panel-muted: #f9fbf1;
+  --accent: #8fc231;
+  --accent-strong: #5a8613;
+  --accent-muted: rgba(143, 194, 49, 0.18);
+  --accent-line: rgba(143, 194, 49, 0.35);
+  --text-strong: #1f2a16;
+  --text-muted: #4d5d34;
+  --shadow: 0 40px 90px rgba(26, 44, 8, 0.18);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at 12% 20%, rgba(143, 194, 49, 0.18), transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(73, 128, 15, 0.12), transparent 35%), var(--bg);
+  color: var(--text-strong);
+  font-family: var(--font-base);
+  line-height: 1.6;
+  display: flex;
+  justify-content: center;
+  padding: clamp(1.5rem, 5vw, 3rem);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(140deg, rgba(227, 238, 196, 0.7), rgba(255, 255, 255, 0));
+  z-index: 0;
+}
+
+#app {
+  width: min(1080px, 100%);
+  position: relative;
+  z-index: 1;
+}
+
+.router {
+  background: var(--panel);
+  border-radius: clamp(28px, 5vw, 48px);
+  padding: clamp(2rem, 6vw, 4rem);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: clamp(2rem, 4vw, 3rem);
+  border: 1px solid var(--accent-line);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  position: relative;
+}
+
+.router::before,
+.router::after {
+  content: '';
+  position: absolute;
+  border-radius: 999px;
+  background: var(--accent-muted);
+  filter: blur(0.5px);
+  pointer-events: none;
+}
+
+.router::before {
+  width: 360px;
+  height: 360px;
+  top: -140px;
+  right: -80px;
+}
+
+.router::after {
+  width: 240px;
+  height: 240px;
+  bottom: -80px;
+  left: -110px;
+}
+
+.router > * {
+  position: relative;
+  z-index: 1;
+}
+
+.router__header {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.router__brand {
+  align-self: flex-start;
+  padding: 0.45rem 1.35rem;
+  border-radius: 999px;
+  background: var(--accent-muted);
+  color: var(--accent-strong);
+  font-family: var(--font-heading);
+  letter-spacing: 0.1em;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+.router__heading {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-family: var(--font-heading);
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+.router__lead {
+  margin: 0;
+  font-size: clamp(1rem, 3.5vw, 1.15rem);
+  color: var(--text-muted);
+  line-height: 1.9;
+}
+
+.router__note {
+  display: inline-flex;
+  margin-top: 0.6rem;
+  padding: 0.2rem 0.9rem;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--accent-strong);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.router__story {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.router__story li {
+  padding: 1rem 1.2rem;
+  border-radius: 20px;
+  border: 1px solid var(--accent-line);
+  background: var(--panel-muted);
+  display: flex;
+  gap: 0.8rem;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.router__story li::before {
+  content: '';
+  display: inline-flex;
+  width: 10px;
+  height: 10px;
+  margin-top: 0.4rem;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.router__buttons {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1rem, 3vw, 1.5rem);
+}
+
+.router__button {
+  appearance: none;
+  border: 1px solid var(--accent-line);
+  border-radius: 28px;
+  padding: clamp(1.4rem, 4vw, 1.8rem) clamp(1.6rem, 4vw, 2.2rem);
+  padding-right: clamp(2.6rem, 5vw, 3.4rem);
+  background: var(--panel-muted);
+  display: flex;
+  gap: 1.2rem;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  box-shadow: 0 25px 45px rgba(30, 50, 8, 0.08);
+  position: relative;
+}
+
+.router__button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: clamp(1.6rem, 4vw, 2.2rem);
+  transform: translateY(-50%) rotate(-45deg);
+  width: 11px;
+  height: 11px;
+  border-right: 2px solid var(--accent-strong);
+  border-bottom: 2px solid var(--accent-strong);
+  transition: transform 0.25s ease;
+}
+
+.router__button:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+  box-shadow: 0 35px 65px rgba(30, 50, 8, 0.14);
+}
+
+.router__button:active {
+  transform: translateY(-1px);
+}
+
+.router__button-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.router__button-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.router__button-meta small {
+  font-size: 0.85rem;
+  font-family: var(--font-heading);
+  letter-spacing: 0.04em;
+  color: var(--accent-strong);
+}
+
+.router__button.is-loading {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.router__status {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 1rem 1.4rem;
+  border-radius: 18px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: 1px solid transparent;
+  background: var(--panel-muted);
+  color: var(--text-strong);
+}
+
+.router__status[data-type='error'] {
+  border-color: rgba(196, 62, 62, 0.4);
+  color: #8b1f1f;
+  background: #fff1f1;
+}
+
+.router__status[data-type='warn'] {
+  border-color: rgba(255, 182, 72, 0.5);
+  color: #8b5a12;
+  background: #fff8ec;
+}
+
+.router__status[data-type='success'] {
+  border-color: rgba(143, 194, 49, 0.5);
+  color: var(--accent-strong);
+  background: rgba(143, 194, 49, 0.15);
+}
+
+.router__status[hidden] {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .router {
+    grid-template-columns: 1fr;
+  }
+
+  .router__button {
+    flex-direction: column;
+    align-items: flex-start;
+    padding-right: clamp(1.6rem, 4vw, 2.2rem);
+  }
+
+  .router__button::after {
+    position: static;
+    margin-top: 0.4rem;
+    transform: rotate(-45deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

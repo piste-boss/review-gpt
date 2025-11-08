@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../src/admin/style.css" />
+    <title>Piste 口コミ管理画面</title>
+  </head>
+  <body>
+    <div id="admin-app">
+      <noscript>
+        <p style="padding:1rem; text-align:center;">JavaScriptを有効にしてご利用ください。</p>
+      </noscript>
+      <main class="admin">
+        <header class="admin__header">
+          <p class="admin__badge">Piste（ピステ）レビュー管理</p>
+          <h1 class="admin__title">口コミルーター/AI設定</h1>
+          <p class="admin__lead">
+            店舗サイトのトーンに合わせたボタン文言・リンク・AI生成条件をまとめて調整できます。各レベルに複数URLを設定するとローテーションでご案内します。
+          </p>
+        </header>
+        <nav class="admin__tabs" aria-label="設定メニュー">
+          <button type="button" class="admin__tab is-active" data-tab-target="labels">ルータ設定</button>
+          <button type="button" class="admin__tab" data-tab-target="ai">AI設定</button>
+          <button type="button" class="admin__tab" data-tab-target="prompts">プロンプト設定</button>
+        </nav>
+        <form id="config-form" class="admin__form">
+          <section class="admin__panel is-active" data-tab-panel="labels">
+            <section class="admin__card">
+              <h2>ボタン表示文言</h2>
+              <div class="admin__fields">
+              <label class="admin__field">
+                <span class="admin__field-label">初級</span>
+                <input type="text" name="beginnerLabel" placeholder="初級" autocomplete="off" />
+                <span class="admin__field-hint">一言レビュー用の最短ルートです。</span>
+              </label>
+              <label class="admin__field">
+                <span class="admin__field-label">中級</span>
+                <input
+                  type="text"
+                  name="intermediateLabel"
+                  placeholder="中級"
+                  autocomplete="off"
+                />
+                <span class="admin__field-hint">100文字前後で風味や温度感を共有する標準ルート。</span>
+              </label>
+              <label class="admin__field">
+                <span class="admin__field-label">上級</span>
+                <input
+                  type="text"
+                  name="advancedLabel"
+                  placeholder="上級"
+                  autocomplete="off"
+                />
+                <span class="admin__field-hint">熱量の高いレビューをお願いしたいときのリッチルートです。</span>
+              </label>
+            </div>
+          </section>
+            <section class="admin__card">
+              <h2>リンク設定</h2>
+              <p class="admin__hint">
+                1行につき1つのURLを登録します。上から順番に自動で案内され、最後まで到達すると再び最初のURLに戻ります。
+              </p>
+              <div class="admin__fields">
+                <label class="admin__field">
+                  <span class="admin__field-label">初級用リンク</span>
+                  <textarea
+                    name="beginnerLinks"
+                    rows="4"
+                    placeholder="https://example.com/form/beginner-1"
+                  ></textarea>
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">中級用リンク</span>
+                  <textarea
+                    name="intermediateLinks"
+                    rows="4"
+                    placeholder="https://example.com/form/intermediate-1"
+                  ></textarea>
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">上級用リンク</span>
+                  <textarea
+                    name="advancedLinks"
+                    rows="4"
+                    placeholder="https://example.com/form/advanced-1"
+                  ></textarea>
+                </label>
+              </div>
+            </section>
+            <section class="admin__card">
+              <h2>ブランド設定</h2>
+              <p class="admin__hint">
+                ブラウザのタブに表示されるファビコン画像を更新できます。PNG/SVG などの正方形画像（推奨 512×512px、1MB 以内）をご用意ください。
+              </p>
+              <div class="admin__brand">
+                <div class="admin__brand-preview" aria-live="polite">
+                  <img src="/vite.svg" alt="現在のファビコン" width="72" height="72" data-role="favicon-preview" />
+                </div>
+                <div class="admin__brand-actions">
+                  <label class="admin__field admin__field--file">
+                    <span class="admin__field-label">ファビコン画像</span>
+                    <input type="file" name="brandingFavicon" accept="image/png,image/svg+xml,image/x-icon,image/*" />
+                    <span class="admin__field-hint">100KB〜1MB程度の画像推奨です。</span>
+                  </label>
+                  <div class="admin__brand-buttons">
+                    <button type="button" class="admin__text-button" data-role="favicon-remove">画像をリセット</button>
+                  </div>
+                  <input type="hidden" name="brandingFaviconData" />
+                </div>
+              </div>
+            </section>
+          </section>
+          <section class="admin__panel" data-tab-panel="ai">
+            <section class="admin__card">
+              <h2>AI設定</h2>
+              <p class="admin__hint">
+                Gemini API・Googleマップの情報を設定します。保存後は口コミ生成ページに反映されます。
+              </p>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__field">
+                  <span class="admin__field-label">モデル名</span>
+                  <input
+                    type="text"
+                    name="model"
+                    placeholder="例: gemini-1.5-flash-latest"
+                    autocomplete="off"
+                  />
+                  <span class="admin__field-hint">使用するGeminiモデルを指定します。未入力の場合はデフォルトモデルを利用します。</span>
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">Gemini APIキー</span>
+                  <input
+                    type="password"
+                    name="geminiApiKey"
+                    placeholder="例: AIza..."
+                    autocomplete="off"
+                  />
+                  <span class="admin__field-hint">Gemini API のシークレットキーを入力してください。</span>
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">Googleマップリンク</span>
+                  <input
+                    type="url"
+                    name="mapsLink"
+                    placeholder="https://maps.app.goo.gl/..."
+                    autocomplete="off"
+                  />
+                </label>
+              </div>
+            </section>
+          </section>
+          <section class="admin__panel" data-tab-panel="prompts">
+            <section class="admin__card">
+              <h2>プロンプト設定</h2>
+              <p class="admin__hint">
+                生成ページごとに使用するGASアプリURLとプロンプトを設定します。未設定の項目はAI設定の共通値を利用します。
+              </p>
+            </section>
+            <section class="admin__card admin__card--prompt" data-prompt-key="page1">
+              <h3 class="admin__card-subtitle">生成ページ1（初級）</h3>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__field">
+                  <span class="admin__field-label">GASアプリURL</span>
+                  <input
+                    type="url"
+                    name="prompt_page1_gasUrl"
+                    placeholder="https://script.google.com/macros/s/.../exec"
+                    autocomplete="off"
+                  />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">プロンプト</span>
+                  <textarea
+                    name="prompt_page1_prompt"
+                    rows="6"
+                    placeholder="生成時に利用する指示文を入力してください。"
+                  ></textarea>
+                </label>
+              </div>
+            </section>
+            <section class="admin__card admin__card--prompt" data-prompt-key="page2">
+              <h3 class="admin__card-subtitle">生成ページ2（中級）</h3>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__field">
+                  <span class="admin__field-label">GASアプリURL</span>
+                  <input
+                    type="url"
+                    name="prompt_page2_gasUrl"
+                    placeholder="https://script.google.com/macros/s/.../exec"
+                    autocomplete="off"
+                  />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">プロンプト</span>
+                  <textarea
+                    name="prompt_page2_prompt"
+                    rows="6"
+                    placeholder="生成時に利用する指示文を入力してください。"
+                  ></textarea>
+                </label>
+              </div>
+            </section>
+            <section class="admin__card admin__card--prompt" data-prompt-key="page3">
+              <h3 class="admin__card-subtitle">生成ページ3（上級）</h3>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__field">
+                  <span class="admin__field-label">GASアプリURL</span>
+                  <input
+                    type="url"
+                    name="prompt_page3_gasUrl"
+                    placeholder="https://script.google.com/macros/s/.../exec"
+                    autocomplete="off"
+                  />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">プロンプト</span>
+                  <textarea
+                    name="prompt_page3_prompt"
+                    rows="6"
+                    placeholder="生成時に利用する指示文を入力してください。"
+                  ></textarea>
+                </label>
+              </div>
+            </section>
+          </section>
+          <div class="admin__actions">
+            <button type="submit" class="admin__submit">設定を保存</button>
+          </div>
+        </form>
+        <p class="admin__status" data-role="status" hidden></p>
+      </main>
+    </div>
+    <script type="module" src="../src/admin/main.js"></script>
+  </body>
+</html>

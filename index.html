@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./src/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <title>Piste 口コミルーター</title>
+  </head>
+  <body>
+    <div id="app">
+      <noscript>
+        <p style="padding:1rem; text-align:center;">JavaScriptを有効にしてご利用ください。</p>
+      </noscript>
+      <main class="router">
+        <header class="router__header">
+          <p class="router__brand">Piste（ピステ）</p>
+          <h1 class="router__heading">体験の声をお聞かせください</h1>
+          <p class="router__lead">
+            トレーニング・整体・託児までワンストップで整えるPisteでは、リアルな声を次のサービスに生かしています。
+            <span class="router__note">AIが投稿例を下書きするので、文章が苦手でも安心です。</span>
+          </p>
+          <ul class="router__story">
+            <li>スタッフやキッズスペースの印象など、短時間で回答できます。</li>
+            <li>回答内容をもとにAIが自然な文章を生成します。</li>
+            <li>気になる部分だけ整えて、各種サイトに貼り付ければ完了です。</li>
+          </ul>
+        </header>
+        <section class="router__buttons">
+          <button class="router__button" data-tier="beginner">
+            <span class="router__button-label">ライトプラン</span>
+            <span class="router__button-meta">
+              <small>目安：30秒</small>
+              <span>チェック式でさっと感想を共有</span>
+            </span>
+          </button>
+          <button class="router__button" data-tier="intermediate">
+            <span class="router__button-label">スタンダード</span>
+            <span class="router__button-meta">
+              <small>目安：60秒</small>
+              <span>選択式＋一言コメントで100文字程度生成</span>
+            </span>
+          </button>
+          <button class="router__button" data-tier="advanced">
+            <span class="router__button-label">プレミアム</span>
+            <span class="router__button-meta">
+              <small>目安：90秒</small>
+              <span>じっくり回答で200文字以上の濃いレビュー</span>
+            </span>
+          </button>
+        </section>
+        <p class="router__status" data-role="status" hidden></p>
+      </main>
+    </div>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
