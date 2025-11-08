@@ -56,6 +56,8 @@ const DEFAULT_FORM1 = {
   description: '星をタップして今回のサービスの満足度をお選びください。選択内容は生成されるクチコミのトーンに反映されます。',
   inputStyle: 'stars',
   reasonEnabled: false,
+  reasonTitle: 'よろしければ理由をお聞かせ下さい',
+  reasonDescription: '任意入力です。感じたことや具体的なポイントがあればご記入ください。',
 }
 
 const app = document.querySelector('#admin-app')
@@ -91,6 +93,8 @@ const form1Fields = {
   lead: form.elements.form1Lead,
   mode: form.elements.form1Mode, // RadioNodeList
   reasonEnabled: form.elements.form1ReasonEnabled,
+  reasonTitle: form.elements.form1ReasonTitle,
+  reasonLead: form.elements.form1ReasonLead,
 }
 
 const inferFaviconType = (value) => {
@@ -294,6 +298,12 @@ function populateForm(config) {
   }
   setForm1ModeValue(form1Config.inputStyle || DEFAULT_FORM1.inputStyle)
   setForm1ReasonValue(form1Config.reasonEnabled ?? DEFAULT_FORM1.reasonEnabled)
+  if (form1Fields.reasonTitle) {
+    form1Fields.reasonTitle.value = form1Config.reasonTitle || DEFAULT_FORM1.reasonTitle
+  }
+  if (form1Fields.reasonLead) {
+    form1Fields.reasonLead.value = form1Config.reasonDescription || DEFAULT_FORM1.reasonDescription
+  }
 
   const branding = config.branding || {}
   applyBrandingToUI(branding.faviconDataUrl || '')
@@ -407,6 +417,9 @@ form.addEventListener('submit', async (event) => {
     description: form1LeadValue || DEFAULT_FORM1.description,
     inputStyle: getForm1ModeValue(),
     reasonEnabled: getForm1ReasonValue(),
+    reasonTitle: (form1Fields.reasonTitle?.value || DEFAULT_FORM1.reasonTitle).trim() || DEFAULT_FORM1.reasonTitle,
+    reasonDescription:
+      (form1Fields.reasonLead?.value || DEFAULT_FORM1.reasonDescription).trim() || DEFAULT_FORM1.reasonDescription,
   }
 
   if (errors.length > 0) {

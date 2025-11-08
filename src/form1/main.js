@@ -6,6 +6,8 @@ const DEFAULT_FORM1 = {
   description: '星をタップして今回のサービスの満足度をお選びください。選択内容は生成されるクチコミのトーンに反映されます。',
   inputStyle: 'stars',
   reasonEnabled: false,
+  reasonTitle: 'よろしければ理由をお聞かせ下さい',
+  reasonDescription: '任意入力です。感じたことや具体的なポイントがあればご記入ください。',
 }
 
 const app = document.querySelector('#form-app')
@@ -20,6 +22,8 @@ const titleEl = app.querySelector('[data-role="title"]')
 const leadEl = app.querySelector('[data-role="lead"]')
 const ratingContainer = app.querySelector('[data-role="rating-options"]')
 const reasonCard = app.querySelector('[data-role="reason-card"]')
+const reasonTitleEl = reasonCard?.querySelector('[data-role="reason-title"]')
+const reasonLeadEl = reasonCard?.querySelector('[data-role="reason-lead"]')
 
 const RATING_MESSAGES = {
   1: '1 - 改善してほしい点がありました。',
@@ -169,6 +173,12 @@ const applyFormContent = (formConfig = {}) => {
   renderRatingOptions(currentFormConfig.inputStyle)
 
   if (reasonCard) {
+    if (reasonTitleEl) {
+      reasonTitleEl.textContent = currentFormConfig.reasonTitle || DEFAULT_FORM1.reasonTitle
+    }
+    if (reasonLeadEl) {
+      reasonLeadEl.textContent = currentFormConfig.reasonDescription || DEFAULT_FORM1.reasonDescription
+    }
     if (currentFormConfig.reasonEnabled) {
       reasonCard.removeAttribute('hidden')
     } else {

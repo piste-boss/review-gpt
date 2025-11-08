@@ -19,6 +19,8 @@ const DEFAULT_FORM1 = {
   description: '星をタップして今回のサービスの満足度をお選びください。選択内容は生成されるクチコミのトーンに反映されます。',
   inputStyle: 'stars',
   reasonEnabled: false,
+  reasonTitle: 'よろしければ理由をお聞かせ下さい',
+  reasonDescription: '任意入力です。感じたことや具体的なポイントがあればご記入ください。',
 }
 
 const DEFAULT_CONFIG = {
@@ -123,6 +125,12 @@ const mergeWithDefault = (config = {}, fallback = DEFAULT_CONFIG) => {
     description: sanitizeString(config.form1?.description ?? fallback.form1?.description ?? DEFAULT_FORM1.description),
     inputStyle: sanitizeInputStyle(config.form1?.inputStyle ?? fallback.form1?.inputStyle ?? DEFAULT_FORM1.inputStyle),
     reasonEnabled: Boolean(config.form1?.reasonEnabled ?? fallback.form1?.reasonEnabled ?? DEFAULT_FORM1.reasonEnabled),
+    reasonTitle: sanitizeString(
+      config.form1?.reasonTitle ?? fallback.form1?.reasonTitle ?? DEFAULT_FORM1.reasonTitle,
+    ),
+    reasonDescription: sanitizeString(
+      config.form1?.reasonDescription ?? fallback.form1?.reasonDescription ?? DEFAULT_FORM1.reasonDescription,
+    ),
   }
 
   return {
