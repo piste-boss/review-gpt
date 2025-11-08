@@ -36,7 +36,7 @@ body {
   line-height: 1.6;
   display: flex;
   justify-content: center;
-  padding: clamp(1.5rem, 5vw, 3rem);
+  padding: clamp(1rem, 6vw, 1.8rem);
 }
 
 body::before {
@@ -48,18 +48,18 @@ body::before {
 }
 
 #app {
-  width: min(1080px, 100%);
+  width: min(560px, 100%);
   position: relative;
   z-index: 1;
 }
 
 .router {
   background: var(--panel);
-  border-radius: clamp(28px, 5vw, 48px);
-  padding: clamp(2rem, 6vw, 4rem);
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: clamp(2rem, 4vw, 3rem);
+  border-radius: clamp(24px, 6vw, 40px);
+  padding: clamp(1.8rem, 6vw, 3rem);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.2rem, 4vw, 2.4rem);
   border: 1px solid var(--accent-line);
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -115,7 +115,7 @@ body::before {
 
 .router__heading {
   margin: 0;
-  font-size: clamp(2rem, 5vw, 3rem);
+  font-size: clamp(1.75rem, 6vw, 2.6rem);
   font-family: var(--font-heading);
   letter-spacing: 0.04em;
   line-height: 1.2;
@@ -123,7 +123,7 @@ body::before {
 
 .router__lead {
   margin: 0;
-  font-size: clamp(1rem, 3.5vw, 1.15rem);
+  font-size: clamp(0.95rem, 4vw, 1.1rem);
   color: var(--text-muted);
   line-height: 1.9;
 }
@@ -184,9 +184,10 @@ body::before {
   padding-right: clamp(2.6rem, 5vw, 3.4rem);
   background: var(--panel-muted);
   display: flex;
+  flex-direction: column;
   gap: 1.2rem;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
+  justify-content: flex-start;
   cursor: pointer;
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   box-shadow: 0 25px 45px rgba(30, 50, 8, 0.08);
@@ -231,6 +232,8 @@ body::before {
   gap: 0.25rem;
   color: var(--text-muted);
   font-size: 0.95rem;
+  align-items: flex-start;
+  text-align: left;
 }
 
 .router__button-meta small {
@@ -246,7 +249,6 @@ body::before {
 }
 
 .router__status {
-  grid-column: 1 / -1;
   margin: 0;
   padding: 1rem 1.4rem;
   border-radius: 18px;
@@ -279,21 +281,14 @@ body::before {
   display: none;
 }
 
-@media (max-width: 860px) {
+@media (min-width: 640px) {
+  #app {
+    width: min(640px, 100%);
+  }
+
   .router {
-    grid-template-columns: 1fr;
-  }
-
-  .router__button {
-    flex-direction: column;
-    align-items: flex-start;
-    padding-right: clamp(1.6rem, 4vw, 2.2rem);
-  }
-
-  .router__button::after {
-    position: static;
-    margin-top: 0.4rem;
-    transform: rotate(-45deg);
+    padding: clamp(2rem, 5vw, 3.2rem);
+    gap: 2rem;
   }
 }
 

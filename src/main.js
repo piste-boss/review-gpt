@@ -1,7 +1,7 @@
 const DEFAULT_LABELS = {
-  beginner: 'ライトカップ',
-  intermediate: 'ミディアムカップ',
-  advanced: 'フルシティカップ',
+  beginner: 'ライト',
+  intermediate: 'スタンダード',
+  advanced: 'プレミア',
 }
 
 const DEFAULT_FAVICON_PATH = '/vite.svg'
