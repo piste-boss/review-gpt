@@ -147,6 +147,15 @@ body {
   color: var(--text-muted);
 }
 
+.form__rating-guides {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+  padding: 0 0.25rem;
+}
+
 .form__ratings {
   display: flex;
   justify-content: space-between;
