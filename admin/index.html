@@ -31,7 +31,8 @@
         <nav class="admin__tabs" aria-label="設定メニュー">
           <button type="button" class="admin__tab is-active" data-tab-target="labels">ルータ設定</button>
           <button type="button" class="admin__tab" data-tab-target="ai">AI設定</button>
-          <button type="button" class="admin__tab" data-tab-target="form1">フォーム1</button>
+          <button type="button" class="admin__tab" data-tab-target="form1">form1</button>
+          <button type="button" class="admin__tab" data-tab-target="form2">form2</button>
           <button type="button" class="admin__tab" data-tab-target="prompts">プロンプト設定</button>
         </nav>
         <form id="config-form" class="admin__form">
@@ -162,7 +163,7 @@
           </section>
           <section class="admin__panel" data-tab-panel="form1">
             <section class="admin__card">
-              <h2>フォーム1表示文言</h2>
+              <h2>form1表示文言</h2>
               <div class="admin__fields admin__fields--single">
                 <label class="admin__field">
                   <span class="admin__field-label">タイトル</span>
@@ -200,16 +201,16 @@
             <section class="admin__card">
               <h2>理由入力欄</h2>
               <p class="admin__hint">任意のコメント欄を表示したい場合に有効化します。ON/OFF と文言をまとめて設定できます。</p>
-              <div class="admin__choices admin__choices--inline">
-                <label class="admin__choice">
-                  <input type="radio" name="form1ReasonEnabled" value="on" />
-                  <span>オンにする</span>
-                </label>
-                <label class="admin__choice">
-                  <input type="radio" name="form1ReasonEnabled" value="off" checked />
-                  <span>オフにする</span>
-                </label>
-              </div>
+              <label class="admin__toggle">
+                <span class="admin__toggle-label">理由入力欄を表示する</span>
+                <span class="admin__toggle-control">
+                  <input type="checkbox" name="form1ReasonEnabled" class="admin__toggle-input" />
+                  <span class="admin__toggle-track" aria-hidden="true">
+                    <span class="admin__toggle-thumb"></span>
+                  </span>
+                  <span class="admin__toggle-status" data-role="reason-toggle-status">OFF</span>
+                </span>
+              </label>
               <div class="admin__fields admin__fields--single">
                 <label class="admin__field">
                   <span class="admin__field-label">理由タイトル</span>
@@ -229,6 +230,43 @@
                   ></textarea>
                 </label>
               </div>
+            </section>
+          </section>
+          <section class="admin__panel" data-tab-panel="form2">
+            <section class="admin__card">
+              <h2>form2表示文言</h2>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__field">
+                  <span class="admin__field-label">タイトル</span>
+                  <input
+                    type="text"
+                    name="form2Title"
+                    placeholder="体験に関するアンケートにご協力ください"
+                    autocomplete="off"
+                  />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">リード文</span>
+                  <textarea
+                    name="form2Lead"
+                    rows="3"
+                    placeholder="該当する項目を選択してください。複数回答可の設問はチェックマークで選べます。"
+                  ></textarea>
+                </label>
+              </div>
+            </section>
+            <section class="admin__card admin__card--questions">
+              <div class="admin__card-heading">
+                <h2>設問</h2>
+                <button type="button" class="admin__icon-button" data-role="form2-add-question">
+                  <span aria-hidden="true">＋</span>
+                  <span>設問を追加</span>
+                </button>
+              </div>
+              <p class="admin__hint">
+                設問ごとに質問文や選択肢、回答形式（ドロップダウン / チェックボックス / テキスト入力）、星評価の有無を設定できます。
+              </p>
+              <div class="admin__question-list" data-role="form2-question-list"></div>
             </section>
           </section>
           <section class="admin__panel" data-tab-panel="prompts">

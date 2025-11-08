@@ -11,6 +11,7 @@ export default defineConfig({
         generatorPage2: resolve(__dirname, 'generator/page2/index.html'),
         generatorPage3: resolve(__dirname, 'generator/page3/index.html'),
         form1: resolve(__dirname, 'form1/index.html'),
+        form2: resolve(__dirname, 'form2/index.html'),
       },
     },
   },
