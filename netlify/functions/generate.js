@@ -89,6 +89,10 @@ const extractTextFromGemini = (payload) => {
     .trim()
 }
 
+export const config = {
+  blobs: true,
+}
+
 export const handler = async (event, context) => {
   if (event.httpMethod === 'OPTIONS') {
     return {

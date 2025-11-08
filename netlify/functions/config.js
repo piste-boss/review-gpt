@@ -2,6 +2,10 @@ import { getConfigStore } from './_lib/store.js'
 
 const CONFIG_KEY = 'router-config'
 
+export const config = {
+  blobs: true,
+}
+
 const sanitizeString = (value) => (typeof value === 'string' ? value.trim() : '')
 
 const DEFAULT_PROMPTS = {

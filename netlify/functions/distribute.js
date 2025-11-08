@@ -2,6 +2,10 @@ import { getConfigStore } from './_lib/store.js'
 
 const CONFIG_KEY = 'router-config'
 
+export const config = {
+  blobs: true,
+}
+
 const DEFAULT_PROMPTS = {
   page1: { gasUrl: '', prompt: '' },
   page2: { gasUrl: '', prompt: '' },
