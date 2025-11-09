@@ -101,6 +101,43 @@ body {
   gap: 0.8rem;
 }
 
+.form2__question--not-reflect {
+  position: relative;
+  background: rgba(237, 240, 232, 0.7);
+  border: 1px dashed rgba(31, 42, 22, 0.3);
+}
+
+.form2__question--not-reflect::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    135deg,
+    rgba(143, 194, 49, 0.08),
+    rgba(143, 194, 49, 0.08) 10px,
+    transparent 10px,
+    transparent 20px
+  );
+  border-radius: 20px;
+  pointer-events: none;
+}
+
+.form2__question--not-reflect > * {
+  position: relative;
+  z-index: 1;
+}
+
+.form2__question-note {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #7a4f00;
+  background: rgba(255, 215, 141, 0.4);
+  border-radius: 999px;
+  align-self: flex-start;
+  padding: 0.2rem 0.8rem;
+  font-weight: 600;
+}
+
 .form2__question-heading {
   display: flex;
   align-items: center;

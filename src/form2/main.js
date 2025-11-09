@@ -356,6 +356,16 @@ const renderQuestions = () => {
     const questionCard = document.createElement('article')
     questionCard.className = 'form2__question'
     questionCard.dataset.questionId = question.id
+    const includeInReview = question.includeInReview !== false
+    questionCard.dataset.includeInReview = includeInReview ? 'true' : 'false'
+
+    if (!includeInReview) {
+      questionCard.classList.add('form2__question--not-reflect')
+      const note = document.createElement('p')
+      note.className = 'form2__question-note'
+      note.textContent = '※この設問は口コミには反映されません'
+      questionCard.appendChild(note)
+    }
 
     const heading = document.createElement('div')
     heading.className = 'form2__question-heading'
@@ -392,6 +402,8 @@ const renderQuestions = () => {
         inputs: [],
         textEl: null,
         statusEl: statusNode,
+        title: question.title,
+        includeInReview,
         rating: {
           currentScore: 0,
           buttons: ratingContent.buttons,
@@ -416,6 +428,8 @@ const renderQuestions = () => {
         inputs: [],
         textEl: null,
         statusEl: statusNode,
+        title: question.title,
+        includeInReview,
         rating: null,
       })
     } else if (question.type === 'checkbox') {
@@ -429,6 +443,8 @@ const renderQuestions = () => {
         inputs,
         textEl: null,
         statusEl: statusNode,
+        title: question.title,
+        includeInReview,
         rating: null,
       })
     } else {
@@ -442,6 +458,8 @@ const renderQuestions = () => {
         inputs: [],
         textEl: textarea,
         statusEl: statusNode,
+        title: question.title,
+        includeInReview,
         rating: null,
       })
     }
@@ -557,9 +575,16 @@ const collectAnswers = () => {
       value = textValue
     }
 
-    answers[questionId] = {
+    const includeInReview = ref.includeInReview !== false
+    const questionLabel = (ref.title || '').trim() || questionId
+    const answerKey = includeInReview ? questionLabel : `not-reflect:${questionLabel}`
+    answers[answerKey] = {
       value,
       rating: ref.rating ? ref.rating.currentScore || 0 : 0,
+      questionId: questionLabel,
+      questionInternalId: questionId,
+      questionTitle: questionLabel,
+      includeInReview,
     }
   })
 
@@ -583,16 +608,9 @@ const sendSurveyResults = async (answers) => {
     return false
   }
 
-  const headers = {
-    'Content-Type': 'application/json',
-  }
-  if (surveyResultsConfig.apiKey) {
-    headers.Authorization = `Bearer ${surveyResultsConfig.apiKey}`
-  }
-
-  const response = await fetch(surveyResultsConfig.endpointUrl, {
+  const response = await fetch('/.netlify/functions/survey-submit', {
     method: 'POST',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(buildSubmissionPayload(answers)),
   })
 
