@@ -107,6 +107,12 @@ const DEFAULT_FORM3 = {
   ],
 }
 
+const DEFAULT_SURVEY_RESULTS = {
+  spreadsheetUrl: '',
+  endpointUrl: '',
+  apiKey: '',
+}
+
 const sanitizeBooleanFlag = (value, fallback = false) => {
   if (typeof value === 'boolean') return value
   if (typeof value === 'number') return !Number.isNaN(value) && value !== 0
@@ -218,6 +224,7 @@ const DEFAULT_CONFIG = {
   branding: {
     faviconDataUrl: '',
   },
+  surveyResults: DEFAULT_SURVEY_RESULTS,
   form1: DEFAULT_FORM1,
   form2: DEFAULT_FORM2,
   form3: DEFAULT_FORM3,
@@ -293,6 +300,21 @@ const mergeWithDefault = (config = {}, fallback = DEFAULT_CONFIG) => {
   const mergedBranding = {
     faviconDataUrl: sanitizeString(config.branding?.faviconDataUrl ?? fallback.branding?.faviconDataUrl),
   }
+  const mergedSurveyResults = {
+    spreadsheetUrl: sanitizeString(
+      config.surveyResults?.spreadsheetUrl ??
+        fallback.surveyResults?.spreadsheetUrl ??
+        DEFAULT_SURVEY_RESULTS.spreadsheetUrl,
+    ),
+    endpointUrl: sanitizeString(
+      config.surveyResults?.endpointUrl ??
+        fallback.surveyResults?.endpointUrl ??
+        DEFAULT_SURVEY_RESULTS.endpointUrl,
+    ),
+    apiKey: sanitizeString(
+      config.surveyResults?.apiKey ?? fallback.surveyResults?.apiKey ?? DEFAULT_SURVEY_RESULTS.apiKey,
+    ),
+  }
   const mergeForm = (key, defaults) => ({
     title: sanitizeString(config[key]?.title ?? fallback[key]?.title ?? defaults.title),
     description: sanitizeString(config[key]?.description ?? fallback[key]?.description ?? defaults.description),
@@ -313,6 +335,7 @@ const mergeWithDefault = (config = {}, fallback = DEFAULT_CONFIG) => {
     aiSettings: mergedAiSettings,
     prompts: mergedPrompts,
     branding: mergedBranding,
+    surveyResults: mergedSurveyResults,
     form1: mergedForm1,
     form2: mergedForm2,
     form3: mergedForm3,

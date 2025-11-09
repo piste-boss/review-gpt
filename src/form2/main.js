@@ -95,6 +95,12 @@ const DEFAULT_FORMS = {
 
 const RATING_SCALE = [1, 2, 3, 4, 5]
 
+const DEFAULT_SURVEY_RESULTS = {
+  spreadsheetUrl: '',
+  endpointUrl: '',
+  apiKey: '',
+}
+
 const app = document.querySelector('#form2-app')
 if (!app) {
   throw new Error('#form2-app が見つかりません。')
@@ -111,6 +117,8 @@ const submitButton = app.querySelector('[data-role="submit"]')
 
 const questionRefs = new Map()
 let currentFormConfig = DEFAULT_FORM
+let surveyResultsConfig = { ...DEFAULT_SURVEY_RESULTS }
+let isSubmitting = false
 
 const readCachedConfig = () => {
   try {
@@ -127,6 +135,13 @@ const writeCachedConfig = (config) => {
     window.localStorage.setItem(CONFIG_CACHE_KEY, JSON.stringify(config))
   } catch {
     // noop
+  }
+}
+
+const updateSurveyResultsConfig = (config) => {
+  surveyResultsConfig = {
+    ...DEFAULT_SURVEY_RESULTS,
+    ...(config?.surveyResults || {}),
   }
 }
 
@@ -480,6 +495,7 @@ const loadConfig = async () => {
     }
     const payload = await response.json()
     writeCachedConfig(payload)
+    updateSurveyResultsConfig(payload)
     const formConfig = payload?.[FORM_KEY]
     if (formConfig) {
       applyFormContent(formConfig)
@@ -493,6 +509,7 @@ const initializeForm = () => {
   const cached = readCachedConfig()
   if (cached?.[FORM_KEY]) {
     applyFormContent(cached[FORM_KEY])
+    updateSurveyResultsConfig(cached)
   } else {
     applyFormContent(DEFAULT_FORM)
   }
@@ -549,23 +566,99 @@ const collectAnswers = () => {
   return { answers, errors }
 }
 
-submitButton?.addEventListener('click', () => {
+const buildSubmissionPayload = (answers) => ({
+  formKey: FORM_KEY,
+  answers,
+  metadata: {
+    submittedAt: new Date().toISOString(),
+    userAgent: window.navigator.userAgent,
+    referrer: document.referrer || '',
+    pageUrl: window.location.href,
+    spreadsheetUrl: surveyResultsConfig.spreadsheetUrl || '',
+  },
+})
+
+const sendSurveyResults = async (answers) => {
+  if (!surveyResultsConfig.endpointUrl) {
+    return false
+  }
+
+  const headers = {
+    'Content-Type': 'application/json',
+  }
+  if (surveyResultsConfig.apiKey) {
+    headers.Authorization = `Bearer ${surveyResultsConfig.apiKey}`
+  }
+
+  const response = await fetch(surveyResultsConfig.endpointUrl, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(buildSubmissionPayload(answers)),
+  })
+
+  if (!response.ok) {
+    let details = ''
+    try {
+      const text = await response.text()
+      if (text) {
+        try {
+          const parsed = JSON.parse(text)
+          details = parsed?.message || text
+        } catch {
+          details = text
+        }
+      }
+    } catch {
+      // noop
+    }
+    const errorMessage = details || `アンケート送信に失敗しました (status ${response.status}).`
+    throw new Error(errorMessage)
+  }
+
+  return true
+}
+
+const redirectToGenerator = () => {
+  const redirectMap = {
+    form1: '/generator/index.html',
+    form2: '/generator/page2/index.html',
+    form3: '/generator/page3/index.html',
+  }
+  window.location.href = redirectMap[FORM_KEY] || '/generator/page2/index.html'
+}
+
+submitButton?.addEventListener('click', async () => {
+  if (isSubmitting) return
   const { errors, answers } = collectAnswers()
   if (errors.length > 0) {
     setStatus('未回答の必須項目があります。', 'error')
     return
   }
-  // eslint-disable-next-line no-console
-  console.log(`${FORM_KEY} answers`, answers)
-  setStatus('回答を保存しました。口コミ生成ページへ移動します。', 'success')
-  window.setTimeout(() => {
-    const redirectMap = {
-      form1: '/generator/index.html',
-      form2: '/generator/page2/index.html',
-      form3: '/generator/page3/index.html',
+
+  isSubmitting = true
+  submitButton.disabled = true
+  const hasEndpoint = Boolean(surveyResultsConfig.endpointUrl)
+
+  try {
+    if (hasEndpoint) {
+      setStatus('アンケート結果を送信しています…')
+      await sendSurveyResults(answers)
+      setStatus('回答を送信しました。口コミ生成ページへ移動します。', 'success')
+    } else {
+      setStatus('回答を保存しました。口コミ生成ページへ移動します。', 'success')
     }
-    window.location.href = redirectMap[FORM_KEY] || '/generator/page2/index.html'
-  }, 600)
+    // eslint-disable-next-line no-console
+    console.log(`${FORM_KEY} answers`, answers)
+    window.setTimeout(() => {
+      redirectToGenerator()
+    }, 600)
+  } catch (error) {
+    console.error(error)
+    setStatus(error.message || '回答の送信に失敗しました。時間をおいて再度お試しください。', 'error')
+  } finally {
+    isSubmitting = false
+    submitButton.disabled = false
+  }
 })
 
 initializeForm()

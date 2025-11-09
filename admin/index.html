@@ -23,18 +23,20 @@
       <main class="admin">
         <header class="admin__header">
           <p class="admin__badge">クチコミGPT管理画面</p>
-          <h1 class="admin__title">口コミルーター/AI設定</h1>
+          <h1 class="admin__title">口コミルーター/システム設定</h1>
           <p class="admin__lead">
             店舗サイトのトーンに合わせたボタン文言・リンク・AI生成条件をまとめて調整できます。各レベルに複数URLを設定するとローテーションでご案内します。
           </p>
         </header>
         <nav class="admin__tabs" aria-label="設定メニュー">
           <button type="button" class="admin__tab is-active" data-tab-target="labels">ルータ設定</button>
-          <button type="button" class="admin__tab" data-tab-target="ai">AI設定</button>
-          <button type="button" class="admin__tab" data-tab-target="form1">form1</button>
-          <button type="button" class="admin__tab" data-tab-target="form2">form2</button>
-          <button type="button" class="admin__tab" data-tab-target="form3">form3</button>
-          <button type="button" class="admin__tab" data-tab-target="prompts">プロンプト設定</button>
+          <button type="button" class="admin__tab" data-tab-target="ai">システム設定</button>
+          <button type="button" class="admin__tab" data-tab-target="maps">マップ設定</button>
+          <button type="button" class="admin__tab" data-tab-target="form1">アンケート1</button>
+          <button type="button" class="admin__tab" data-tab-target="form2">アンケート2</button>
+          <button type="button" class="admin__tab" data-tab-target="form3">アンケート3</button>
+          <button type="button" class="admin__tab" data-tab-target="prompts">AI設定</button>
+          <button type="button" class="admin__tab" data-tab-target="results">アンケート結果</button>
           <button type="button" class="admin__tab" data-tab-target="qr">QRコード作成</button>
         </nav>
         <form id="config-form" class="admin__form">
@@ -151,6 +153,76 @@
                   />
                   <span class="admin__field-hint">Gemini API のシークレットキーを入力してください。</span>
                 </label>
+              </div>
+            </section>
+            <section class="admin__card admin__card--results">
+              <h2>アンケートデータ</h2>
+              <p class="admin__hint">
+                各アンケートの回答取得に使う GAS アプリURL を設定します。プロンプト設定タブでは指示文のみ編集します。
+              </p>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__field">
+                  <span class="admin__field-label">アンケート1（初級）GAS URL</span>
+                  <input
+                    type="url"
+                    name="prompt_page1_gasUrl"
+                    placeholder="https://script.google.com/macros/s/.../exec"
+                    autocomplete="off"
+                  />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">アンケート2（中級）GAS URL</span>
+                  <input
+                    type="url"
+                    name="prompt_page2_gasUrl"
+                    placeholder="https://script.google.com/macros/s/.../exec"
+                    autocomplete="off"
+                  />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">アンケート3（上級）GAS URL</span>
+                  <input
+                    type="url"
+                    name="prompt_page3_gasUrl"
+                    placeholder="https://script.google.com/macros/s/.../exec"
+                    autocomplete="off"
+                  />
+                </label>
+              </div>
+            </section>
+            <section class="admin__card admin__card--results">
+              <h2>アンケート送信先</h2>
+              <p class="admin__hint">
+                アンケート1〜3の回答を保存するバックエンド（例: GAS Webアプリ）のエンドポイントやAPIキーを設定します。未設定の場合、フォームは送信結果を保持せずに生成ページへ遷移します。
+              </p>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__field">
+                  <span class="admin__field-label">送信先API(URL)</span>
+                  <input
+                    type="url"
+                    name="surveyEndpointUrl"
+                    placeholder="https://script.google.com/macros/s/.../exec"
+                    autocomplete="off"
+                  />
+                  <span class="admin__field-hint">
+                    GAS などで公開した Web API の URL。アンケート1/2/3 は回答送信時に <code>{ formKey, answers, metadata }</code> を POST します。
+                  </span>
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">APIキー（任意）</span>
+                  <input type="text" name="surveyApiKey" placeholder="例: Bearer 用シークレット" autocomplete="off" />
+                  <span class="admin__field-hint">送信時に <code>Authorization: Bearer {キー}</code> を付与します。未入力の場合はヘッダーを省略します。</span>
+                </label>
+              </div>
+            </section>
+          </section>
+          <section class="admin__panel" data-tab-panel="maps">
+            <section class="admin__card">
+              <h2>マップ設定</h2>
+              <p class="admin__hint">
+                生成ページの「Googleマップで見る」導線に使用するリンクを設定します。店舗の共有リンクを貼り付けてください。
+              </p>
+              <div class="admin__fields admin__fields--single">
                 <label class="admin__field">
                   <span class="admin__field-label">Googleマップリンク</span>
                   <input
@@ -165,7 +237,7 @@
           </section>
           <section class="admin__panel" data-tab-panel="form1">
             <section class="admin__card">
-              <h2>form1表示文言</h2>
+              <h2>アンケート1表示文言</h2>
               <div class="admin__fields admin__fields--single">
                 <label class="admin__field">
                   <span class="admin__field-label">タイトル</span>
@@ -191,7 +263,7 @@
                 <h2>設問</h2>
               </div>
               <p class="admin__hint">
-                form2/3と同じ形式で、質問文や回答形式（ドロップダウン / チェックボックス / テキスト入力 / 数字選択）を設定できます。
+                アンケート2/3と同じ形式で、質問文や回答形式（ドロップダウン / チェックボックス / テキスト入力 / 数字選択）を設定できます。
               </p>
               <div class="admin__question-list" data-role="form1-question-list"></div>
               <div class="admin__question-actions">
@@ -204,7 +276,7 @@
           </section>
           <section class="admin__panel" data-tab-panel="form2">
             <section class="admin__card">
-              <h2>form2表示文言</h2>
+              <h2>アンケート2表示文言</h2>
               <div class="admin__fields admin__fields--single">
                 <label class="admin__field">
                   <span class="admin__field-label">タイトル</span>
@@ -243,7 +315,7 @@
           </section>
           <section class="admin__panel" data-tab-panel="form3">
             <section class="admin__card">
-              <h2>form3表示文言</h2>
+              <h2>アンケート3表示文言</h2>
               <div class="admin__fields admin__fields--single">
                 <label class="admin__field">
                   <span class="admin__field-label">タイトル</span>
@@ -269,7 +341,7 @@
                 <h2>設問</h2>
               </div>
               <p class="admin__hint">
-                form2と同様に設問ごとに質問文や選択肢、回答形式（ドロップダウン / チェックボックス / テキスト入力 / 数字選択）を設定できます。
+                アンケート2と同様に設問ごとに質問文や選択肢、回答形式（ドロップダウン / チェックボックス / テキスト入力 / 数字選択）を設定できます。
               </p>
               <div class="admin__question-list" data-role="form3-question-list"></div>
               <div class="admin__question-actions">
@@ -284,21 +356,12 @@
             <section class="admin__card">
               <h2>プロンプト設定</h2>
               <p class="admin__hint">
-                生成ページごとに使用するGASアプリURLとプロンプトを設定します。未設定の項目はAI設定の共通値を利用します。
+                生成ページごとのAIへの指示内容を設定します。
               </p>
             </section>
             <section class="admin__card admin__card--prompt" data-prompt-key="page1">
               <h3 class="admin__card-subtitle">生成ページ1（初級）</h3>
               <div class="admin__fields admin__fields--single">
-                <label class="admin__field">
-                  <span class="admin__field-label">GASアプリURL</span>
-                  <input
-                    type="url"
-                    name="prompt_page1_gasUrl"
-                    placeholder="https://script.google.com/macros/s/.../exec"
-                    autocomplete="off"
-                  />
-                </label>
                 <label class="admin__field">
                   <span class="admin__field-label">プロンプト</span>
                   <textarea
@@ -313,15 +376,6 @@
               <h3 class="admin__card-subtitle">生成ページ2（中級）</h3>
               <div class="admin__fields admin__fields--single">
                 <label class="admin__field">
-                  <span class="admin__field-label">GASアプリURL</span>
-                  <input
-                    type="url"
-                    name="prompt_page2_gasUrl"
-                    placeholder="https://script.google.com/macros/s/.../exec"
-                    autocomplete="off"
-                  />
-                </label>
-                <label class="admin__field">
                   <span class="admin__field-label">プロンプト</span>
                   <textarea
                     name="prompt_page2_prompt"
@@ -335,15 +389,6 @@
               <h3 class="admin__card-subtitle">生成ページ3（上級）</h3>
               <div class="admin__fields admin__fields--single">
                 <label class="admin__field">
-                  <span class="admin__field-label">GASアプリURL</span>
-                  <input
-                    type="url"
-                    name="prompt_page3_gasUrl"
-                    placeholder="https://script.google.com/macros/s/.../exec"
-                    autocomplete="off"
-                  />
-                </label>
-                <label class="admin__field">
                   <span class="admin__field-label">プロンプト</span>
                   <textarea
                     name="prompt_page3_prompt"
@@ -351,6 +396,31 @@
                     placeholder="生成時に利用する指示文を入力してください。"
                   ></textarea>
                 </label>
+              </div>
+            </section>
+          </section>
+          <section class="admin__panel" data-tab-panel="results">
+            <section class="admin__card admin__card--results">
+              <h2>アンケート結果</h2>
+              <p class="admin__hint">
+                GAS などのバックエンドで Google スプレッドシートへ回答を書き込む場合に使用します。リンクと送信先 URL を設定すると、アンケート1〜3の回答に <code>formKey</code> と回答内容を付与して POST します。
+              </p>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__field">
+                  <span class="admin__field-label">スプレッドシートURL</span>
+                  <input
+                    type="url"
+                    name="surveySpreadsheetUrl"
+                    placeholder="https://docs.google.com/spreadsheets/d/..."
+                    autocomplete="off"
+                  />
+                  <span class="admin__field-hint">結果を閲覧できるスプレッドシートの共有リンク（ビュー専用でも可）。管理メモ用に保存されます。</span>
+                </label>
+              </div>
+              <div class="admin__callout">
+                <p>
+                  GAS 側では <code>formKey</code> ごとにシートを切り替えるなどの処理を実装してください。送信先APIはシステム設定タブで設定できます。
+                </p>
               </div>
             </section>
           </section>
@@ -365,9 +435,9 @@
                   <span class="admin__field-label">対象ページ</span>
                   <select name="qrPage">
                     <option value="top">トップページ</option>
-                    <option value="form1">Form1</option>
-                    <option value="form2">Form2</option>
-                    <option value="form3">Form3</option>
+                    <option value="form1">アンケート1</option>
+                    <option value="form2">アンケート2</option>
+                    <option value="form3">アンケート3</option>
                   </select>
                   <span class="admin__field-hint">ローカルで表示中のドメインをもとにQRコードを生成します。</span>
                 </label>

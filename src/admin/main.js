@@ -53,11 +53,17 @@ const PROMPT_CONFIGS = [
   { key: 'page3', label: '生成ページ3（上級）' },
 ]
 
+const DEFAULT_SURVEY_RESULTS = {
+  spreadsheetUrl: '',
+  endpointUrl: '',
+  apiKey: '',
+}
+
 const QR_PAGE_TARGETS = [
   { key: 'top', label: 'トップページ', path: '/' },
-  { key: 'form1', label: 'Form1', path: '/form1/' },
-  { key: 'form2', label: 'Form2', path: '/form2/' },
-  { key: 'form3', label: 'Form3', path: '/form3/' },
+  { key: 'form1', label: 'アンケート1', path: '/form1/' },
+  { key: 'form2', label: 'アンケート2', path: '/form2/' },
+  { key: 'form3', label: 'アンケート3', path: '/form3/' },
 ]
 
 const QR_SIZE_MAP = {
@@ -226,6 +232,12 @@ const qrControls = {
   preview: app.querySelector('[data-role="qr-preview"]'),
   refreshButton: app.querySelector('[data-role="qr-refresh"]'),
   downloadButton: app.querySelector('[data-role="qr-download"]'),
+}
+
+const surveyResultsFields = {
+  spreadsheetUrl: form.elements.surveySpreadsheetUrl,
+  endpointUrl: form.elements.surveyEndpointUrl,
+  apiKey: form.elements.surveyApiKey,
 }
 
 
@@ -1015,6 +1027,20 @@ function populateForm(config) {
     if (prompt) prompt.value = promptConfig.prompt || ''
   })
 
+  const surveyResults = {
+    ...DEFAULT_SURVEY_RESULTS,
+    ...(config.surveyResults || {}),
+  }
+  if (surveyResultsFields.spreadsheetUrl) {
+    surveyResultsFields.spreadsheetUrl.value = surveyResults.spreadsheetUrl || ''
+  }
+  if (surveyResultsFields.endpointUrl) {
+    surveyResultsFields.endpointUrl.value = surveyResults.endpointUrl || ''
+  }
+  if (surveyResultsFields.apiKey) {
+    surveyResultsFields.apiKey.value = surveyResults.apiKey || ''
+  }
+
   surveyFormConfigs.forEach(({ key }) => {
     const manager = surveyFormManagers[key]
     if (!manager) return
@@ -1068,7 +1094,7 @@ const hasInvalidUrl = (value) => {
 form.addEventListener('submit', async (event) => {
   event.preventDefault()
 
-  const payload = { labels: {}, tiers: {}, aiSettings: {}, prompts: {}, branding: {} }
+  const payload = { labels: {}, tiers: {}, aiSettings: {}, prompts: {}, branding: {}, surveyResults: {} }
   const errors = []
 
   TIERS.forEach(({ key, defaultLabel }) => {
@@ -1124,6 +1150,22 @@ form.addEventListener('submit', async (event) => {
     }
   })
 
+  const surveyResults = {
+    spreadsheetUrl: (surveyResultsFields.spreadsheetUrl?.value || '').trim(),
+    endpointUrl: (surveyResultsFields.endpointUrl?.value || '').trim(),
+    apiKey: (surveyResultsFields.apiKey?.value || '').trim(),
+  }
+
+  if (surveyResults.spreadsheetUrl && hasInvalidUrl(surveyResults.spreadsheetUrl)) {
+    errors.push('スプレッドシートURLの形式が正しくありません。')
+  }
+
+  if (surveyResults.endpointUrl && hasInvalidUrl(surveyResults.endpointUrl)) {
+    errors.push('送信先API(URL)の形式が正しくありません。')
+  }
+
+  payload.surveyResults = surveyResults
+
   payload.branding = {
     faviconDataUrl: getBrandingValue(),
   }
@@ -1165,6 +1207,7 @@ form.addEventListener('submit', async (event) => {
         aiSettings: payload.aiSettings,
         prompts: payload.prompts,
         branding: payload.branding,
+        surveyResults: payload.surveyResults,
         form1: payload.form1,
         form2: payload.form2,
         form3: payload.form3,
