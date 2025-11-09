@@ -352,20 +352,12 @@ const renderQuestions = () => {
   questionListEl.innerHTML = ''
   questionRefs.clear()
 
-  currentFormConfig.questions.forEach((question) => {
+  currentFormConfig.questions.forEach((question, index) => {
     const questionCard = document.createElement('article')
     questionCard.className = 'form2__question'
     questionCard.dataset.questionId = question.id
     const includeInReview = question.includeInReview !== false
     questionCard.dataset.includeInReview = includeInReview ? 'true' : 'false'
-
-    if (!includeInReview) {
-      questionCard.classList.add('form2__question--not-reflect')
-      const note = document.createElement('p')
-      note.className = 'form2__question-note'
-      note.textContent = '※この設問は口コミには反映されません'
-      questionCard.appendChild(note)
-    }
 
     const heading = document.createElement('div')
     heading.className = 'form2__question-heading'
@@ -408,6 +400,7 @@ const renderQuestions = () => {
           currentScore: 0,
           buttons: ratingContent.buttons,
         },
+        order: index,
       }
       questionRefs.set(question.id, ref)
       ratingContent.buttons.forEach((button) => {
@@ -431,6 +424,7 @@ const renderQuestions = () => {
         title: question.title,
         includeInReview,
         rating: null,
+        order: index,
       })
     } else if (question.type === 'checkbox') {
       const { container, inputs } = buildCheckboxGroup(question, statusNode)
@@ -446,6 +440,7 @@ const renderQuestions = () => {
         title: question.title,
         includeInReview,
         rating: null,
+        order: index,
       })
     } else {
       const textarea = buildTextInput(question, statusNode)
@@ -461,6 +456,7 @@ const renderQuestions = () => {
         title: question.title,
         includeInReview,
         rating: null,
+        order: index,
       })
     }
 
@@ -537,7 +533,7 @@ const initializeForm = () => {
 
 const collectAnswers = () => {
   const errors = []
-  const answers = {}
+  const answerEntries = []
 
   questionRefs.forEach((ref, questionId) => {
     clearQuestionStatus(ref.statusEl)
@@ -578,22 +574,40 @@ const collectAnswers = () => {
     const includeInReview = ref.includeInReview !== false
     const questionLabel = (ref.title || '').trim() || questionId
     const answerKey = includeInReview ? questionLabel : `not-reflect:${questionLabel}`
-    answers[answerKey] = {
-      value,
-      rating: ref.rating ? ref.rating.currentScore || 0 : 0,
-      questionId: questionLabel,
-      questionInternalId: questionId,
-      questionTitle: questionLabel,
-      includeInReview,
-    }
+    answerEntries.push({
+      key: answerKey,
+      order: typeof ref.order === 'number' ? ref.order : Number.MAX_SAFE_INTEGER,
+      payload: {
+        value,
+        rating: ref.rating ? ref.rating.currentScore || 0 : 0,
+        questionId: questionLabel,
+        questionInternalId: questionId,
+        questionTitle: questionLabel,
+        includeInReview,
+        questionOrder: typeof ref.order === 'number' ? ref.order : null,
+      },
+    })
   })
 
-  return { answers, errors }
+  const sortedEntries = answerEntries.sort((a, b) => a.order - b.order)
+
+  const answers = sortedEntries.reduce((acc, entry) => {
+    acc[entry.key] = entry.payload
+    return acc
+  }, {})
+
+  const answersOrdered = sortedEntries.map((entry) => ({
+    key: entry.key,
+    ...entry.payload,
+  }))
+
+  return { answers, answersOrdered, errors }
 }
 
-const buildSubmissionPayload = (answers) => ({
+const buildSubmissionPayload = (answers, answersOrdered) => ({
   formKey: FORM_KEY,
   answers,
+  answersOrdered,
   metadata: {
     submittedAt: new Date().toISOString(),
     userAgent: window.navigator.userAgent,
@@ -603,7 +617,7 @@ const buildSubmissionPayload = (answers) => ({
   },
 })
 
-const sendSurveyResults = async (answers) => {
+const sendSurveyResults = async (answers, answersOrdered) => {
   if (!surveyResultsConfig.endpointUrl) {
     return false
   }
@@ -611,7 +625,7 @@ const sendSurveyResults = async (answers) => {
   const response = await fetch('/.netlify/functions/survey-submit', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(buildSubmissionPayload(answers)),
+    body: JSON.stringify(buildSubmissionPayload(answers, answersOrdered)),
   })
 
   if (!response.ok) {
@@ -647,7 +661,7 @@ const redirectToGenerator = () => {
 
 submitButton?.addEventListener('click', async () => {
   if (isSubmitting) return
-  const { errors, answers } = collectAnswers()
+  const { errors, answers, answersOrdered } = collectAnswers()
   if (errors.length > 0) {
     setStatus('未回答の必須項目があります。', 'error')
     return
@@ -660,13 +674,13 @@ submitButton?.addEventListener('click', async () => {
   try {
     if (hasEndpoint) {
       setStatus('アンケート結果を送信しています…')
-      await sendSurveyResults(answers)
+      await sendSurveyResults(answers, answersOrdered)
       setStatus('回答を送信しました。口コミ生成ページへ移動します。', 'success')
     } else {
       setStatus('回答を保存しました。口コミ生成ページへ移動します。', 'success')
     }
     // eslint-disable-next-line no-console
-    console.log(`${FORM_KEY} answers`, answers)
+    console.log(`${FORM_KEY} answers`, answersOrdered)
     window.setTimeout(() => {
       redirectToGenerator()
     }, 600)
