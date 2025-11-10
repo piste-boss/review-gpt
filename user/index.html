@@ -300,7 +300,10 @@
               </p>
             </section>
             <section class="admin__card admin__card--prompt" data-prompt-key="page1">
-              <h3 class="admin__card-subtitle">生成ページ1（初級）</h3>
+              <div class="admin__prompt-header">
+                <h3 class="admin__card-subtitle">生成ページ1（初級）</h3>
+                <button type="button" class="admin__text-button" data-role="prompt-insert" data-prompt-key="page1">AI入力</button>
+              </div>
               <div class="admin__fields admin__fields--single">
                 <label class="admin__field">
                   <span class="admin__field-label">プロンプト</span>
@@ -313,7 +316,10 @@
               </div>
             </section>
             <section class="admin__card admin__card--prompt" data-prompt-key="page2">
-              <h3 class="admin__card-subtitle">生成ページ2（中級）</h3>
+              <div class="admin__prompt-header">
+                <h3 class="admin__card-subtitle">生成ページ2（中級）</h3>
+                <button type="button" class="admin__text-button" data-role="prompt-insert" data-prompt-key="page2">AI入力</button>
+              </div>
               <div class="admin__fields admin__fields--single">
                 <label class="admin__field">
                   <span class="admin__field-label">プロンプト</span>
@@ -326,7 +332,10 @@
               </div>
             </section>
             <section class="admin__card admin__card--prompt" data-prompt-key="page3">
-              <h3 class="admin__card-subtitle">生成ページ3（上級）</h3>
+              <div class="admin__prompt-header">
+                <h3 class="admin__card-subtitle">生成ページ3（上級）</h3>
+                <button type="button" class="admin__text-button" data-role="prompt-insert" data-prompt-key="page3">AI入力</button>
+              </div>
               <div class="admin__fields admin__fields--single">
                 <label class="admin__field">
                   <span class="admin__field-label">プロンプト</span>
@@ -339,6 +348,14 @@
               </div>
             </section>
           </section>
+          <div class="admin__prompt-popover" data-role="prompt-popover" hidden>
+            <p>テンプレートを選択</p>
+            <div class="admin__prompt-popover-buttons">
+              <button type="button" data-role="prompt-popover-option" data-tier="light">ライト</button>
+              <button type="button" data-role="prompt-popover-option" data-tier="standard">スタンダード</button>
+              <button type="button" data-role="prompt-popover-option" data-tier="platinum">プラチナ</button>
+            </div>
+          </div>
           <section class="admin__panel" data-tab-panel="results">
             <section class="admin__card admin__card--results">
               <h2>アンケート保存先</h2>

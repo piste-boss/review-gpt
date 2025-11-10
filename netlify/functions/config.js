@@ -113,6 +113,16 @@ const DEFAULT_SURVEY_RESULTS = {
   apiKey: '',
 }
 
+const DEFAULT_PROMPT_GENERATOR = {
+  geminiApi: '',
+  prompt: '',
+  references: {
+    light: '',
+    standard: '',
+    platinum: '',
+  },
+}
+
 const sanitizeBooleanFlag = (value, fallback = false) => {
   if (typeof value === 'boolean') return value
   if (typeof value === 'number') return !Number.isNaN(value) && value !== 0
@@ -225,6 +235,7 @@ const DEFAULT_CONFIG = {
     faviconDataUrl: '',
   },
   surveyResults: DEFAULT_SURVEY_RESULTS,
+  promptGenerator: DEFAULT_PROMPT_GENERATOR,
   form1: DEFAULT_FORM1,
   form2: DEFAULT_FORM2,
   form3: DEFAULT_FORM3,
@@ -253,6 +264,16 @@ const toClientConfig = (config) => ({
     geminiApiKey: config.aiSettings?.geminiApiKey ? '******' : '',
     hasGeminiApiKey: Boolean(config.aiSettings?.geminiApiKey),
   },
+  promptGenerator: {
+    prompt: sanitizeString(config.promptGenerator?.prompt),
+    references: {
+      light: sanitizeString(config.promptGenerator?.references?.light),
+      standard: sanitizeString(config.promptGenerator?.references?.standard),
+      platinum: sanitizeString(config.promptGenerator?.references?.platinum),
+    },
+    geminiApi: config.promptGenerator?.geminiApi ? '******' : '',
+    hasGeminiApi: Boolean(config.promptGenerator?.geminiApi),
+  },
 })
 
 const mergePrompts = (incoming = {}, fallback = DEFAULT_PROMPTS) =>
@@ -271,6 +292,19 @@ const mergePrompts = (incoming = {}, fallback = DEFAULT_PROMPTS) =>
     acc[key] = { gasUrl, prompt }
     return acc
   }, {})
+
+const mergePromptGenerator = (incoming = {}, fallback = DEFAULT_PROMPT_GENERATOR) => {
+  const references = {
+    light: sanitizeString(incoming.references?.light ?? fallback.references?.light ?? DEFAULT_PROMPT_GENERATOR.references.light),
+    standard: sanitizeString(incoming.references?.standard ?? fallback.references?.standard ?? DEFAULT_PROMPT_GENERATOR.references.standard),
+    platinum: sanitizeString(incoming.references?.platinum ?? fallback.references?.platinum ?? DEFAULT_PROMPT_GENERATOR.references.platinum),
+  }
+  return {
+    geminiApi: sanitizeString(incoming.geminiApi ?? fallback.geminiApi ?? ''),
+    prompt: sanitizeString(incoming.prompt ?? fallback.prompt ?? ''),
+    references,
+  }
+}
 
 const mergeWithDefault = (config = {}, fallback = DEFAULT_CONFIG) => {
   const mergedLabels = {
@@ -326,6 +360,7 @@ const mergeWithDefault = (config = {}, fallback = DEFAULT_CONFIG) => {
   const mergedForm1 = mergeForm('form1', DEFAULT_FORM1)
   const mergedForm2 = mergeForm('form2', DEFAULT_FORM2)
   const mergedForm3 = mergeForm('form3', DEFAULT_FORM3)
+  const mergedPromptGenerator = mergePromptGenerator(config.promptGenerator, fallback.promptGenerator)
 
   return {
     ...DEFAULT_CONFIG,
@@ -336,6 +371,7 @@ const mergeWithDefault = (config = {}, fallback = DEFAULT_CONFIG) => {
     prompts: mergedPrompts,
     branding: mergedBranding,
     surveyResults: mergedSurveyResults,
+    promptGenerator: mergedPromptGenerator,
     form1: mergedForm1,
     form2: mergedForm2,
     form3: mergedForm3,
@@ -382,6 +418,9 @@ export const handler = async (event, context) => {
 
     const incomingKey = sanitizeString(payload.aiSettings?.geminiApiKey)
     newConfig.aiSettings.geminiApiKey = incomingKey || existingConfig.aiSettings.geminiApiKey || ''
+    const incomingPromptGeneratorKey = sanitizeString(payload.promptGenerator?.geminiApi)
+    newConfig.promptGenerator.geminiApi =
+      incomingPromptGeneratorKey || existingConfig.promptGenerator?.geminiApi || ''
     const timestamp = new Date().toISOString()
     newConfig.updatedAt = timestamp
 

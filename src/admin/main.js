@@ -71,6 +71,16 @@ const DEFAULT_PROMPT_GENERATOR = {
   },
 }
 
+let promptGeneratorData = {
+  hasGeminiApi: false,
+  prompt: '',
+  references: {
+    light: '',
+    standard: '',
+    platinum: '',
+  },
+}
+
 const QR_PAGE_TARGETS = [
   { key: 'top', label: 'トップページ', path: '/' },
   { key: 'form1', label: 'アンケート1', path: '/form1/' },
@@ -265,6 +275,8 @@ const promptFields = PROMPT_CONFIGS.map(({ key }) => ({
   prompt: form.elements[`prompt_${key}_prompt`],
 }))
 
+const getPromptFieldByKey = (key) => promptFields.find((field) => field.key === key)
+
 const USER_PROFILE_FIELD_COUNT = 5
 
 const createProfileFieldArray = (prefix) =>
@@ -290,6 +302,14 @@ const promptGeneratorFields = {
     standard: form.elements.promptGeneratorReferenceStandard,
     platinum: form.elements.promptGeneratorReferencePlatinum,
   },
+}
+
+const promptInsertButtons = Array.from(app.querySelectorAll('[data-role="prompt-insert"]'))
+const promptPopover = {
+  element: app.querySelector('[data-role="prompt-popover"]'),
+  options: Array.from(app.querySelectorAll('[data-role="prompt-popover-option"]')),
+  currentKey: null,
+  anchor: null,
 }
 
 const cloneQuestion = (question) => ({
@@ -376,13 +396,23 @@ const getUserProfilePayload = () => {
 }
 
 const setPromptGeneratorValues = (config = {}) => {
+  const references = config.references || {}
+  const hasGeminiApi = Boolean(config.hasGeminiApi || config.hasPromptGeneratorGeminiApi)
   if (promptGeneratorFields.geminiApi) {
-    promptGeneratorFields.geminiApi.value = config.geminiApi || ''
+    if (hasGeminiApi) {
+      promptGeneratorFields.geminiApi.value = ''
+      promptGeneratorFields.geminiApi.placeholder =
+        '登録済みのキーがあります。更新する場合は新しいキーを入力'
+      promptGeneratorFields.geminiApi.dataset.registered = 'true'
+    } else {
+      promptGeneratorFields.geminiApi.value = config.geminiApi || ''
+      promptGeneratorFields.geminiApi.placeholder = '例: AIza...'
+      delete promptGeneratorFields.geminiApi.dataset.registered
+    }
   }
   if (promptGeneratorFields.prompt) {
     promptGeneratorFields.prompt.value = config.prompt || ''
   }
-  const references = config.references || {}
   if (promptGeneratorFields.references.light) {
     promptGeneratorFields.references.light.value = references.light || ''
   }
@@ -392,17 +422,84 @@ const setPromptGeneratorValues = (config = {}) => {
   if (promptGeneratorFields.references.platinum) {
     promptGeneratorFields.references.platinum.value = references.platinum || ''
   }
+  promptGeneratorData = {
+    hasGeminiApi,
+    prompt: config.prompt || '',
+    references: {
+      light: references.light || '',
+      standard: references.standard || '',
+      platinum: references.platinum || '',
+    },
+  }
 }
 
-const getPromptGeneratorPayload = () => ({
-  geminiApi: (promptGeneratorFields.geminiApi?.value || '').trim(),
-  prompt: (promptGeneratorFields.prompt?.value || '').trim(),
-  references: {
-    light: (promptGeneratorFields.references.light?.value || '').trim(),
-    standard: (promptGeneratorFields.references.standard?.value || '').trim(),
-    platinum: (promptGeneratorFields.references.platinum?.value || '').trim(),
-  },
-})
+const getPromptGeneratorPayload = () => {
+  const payload = {
+    geminiApi: (promptGeneratorFields.geminiApi?.value || '').trim(),
+    prompt: (promptGeneratorFields.prompt?.value || '').trim(),
+    references: {
+      light: (promptGeneratorFields.references.light?.value || '').trim(),
+      standard: (promptGeneratorFields.references.standard?.value || '').trim(),
+      platinum: (promptGeneratorFields.references.platinum?.value || '').trim(),
+    },
+  }
+  promptGeneratorData = {
+    hasGeminiApi: promptGeneratorData.hasGeminiApi || Boolean(payload.geminiApi),
+    prompt: payload.prompt,
+    references: { ...payload.references },
+  }
+  return payload
+}
+
+const hidePromptPopover = () => {
+  if (!promptPopover.element) return
+  promptPopover.element.hidden = true
+  promptPopover.currentKey = null
+  promptPopover.anchor = null
+}
+
+const showPromptPopover = (button, promptKey) => {
+  if (!promptPopover.element) return
+  const rect = button.getBoundingClientRect()
+  promptPopover.element.style.top = `${window.scrollY + rect.bottom + 8}px`
+  promptPopover.element.style.left = `${window.scrollX + rect.left}px`
+  promptPopover.element.hidden = false
+  promptPopover.currentKey = promptKey
+  promptPopover.anchor = button
+}
+
+let promptGeneratorRequestInFlight = false
+
+const requestPromptGeneration = async ({ tier, promptKey }) => {
+  if (promptGeneratorRequestInFlight) {
+    return null
+  }
+  promptGeneratorRequestInFlight = true
+  setStatus('AIがプロンプトを生成しています…', 'info')
+  try {
+    const response = await fetch('/.netlify/functions/prompt-generator', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tier, promptKey }),
+    })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      throw new Error(data?.message || 'AI入力に失敗しました。')
+    }
+    const generatedPrompt = typeof data.prompt === 'string' ? data.prompt.trim() : ''
+    if (!generatedPrompt) {
+      throw new Error('AIが有効なプロンプトを返しませんでした。')
+    }
+    setStatus('AI入力でプロンプトを挿入しました。', 'success')
+    return generatedPrompt
+  } catch (error) {
+    console.error('Prompt generator error:', error)
+    setStatus(error.message, 'error')
+    return null
+  } finally {
+    promptGeneratorRequestInFlight = false
+  }
+}
 
 const getQrPageConfig = (key) =>
   QR_PAGE_TARGETS.find((page) => page.key === key) || QR_PAGE_TARGETS[0]
@@ -1119,6 +1216,64 @@ if (brandingFields.fileInput) {
 }
 if (brandingFields.removeButton) {
   brandingFields.removeButton.addEventListener('click', handleBrandingRemove)
+}
+
+if (promptInsertButtons.length > 0 && promptPopover.element) {
+  promptInsertButtons.forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.preventDefault()
+      const promptKey = button.dataset.promptKey
+      if (!promptKey) return
+      if (!promptGeneratorData.hasGeminiApi) {
+        setStatus('プロンプトジェネレーターのGemini APIキーが未設定です。管理画面で登録してください。', 'error')
+        hidePromptPopover()
+        return
+      }
+      if (!promptPopover.element.hidden && promptPopover.currentKey === promptKey) {
+        hidePromptPopover()
+      } else {
+        showPromptPopover(button, promptKey)
+      }
+    })
+  })
+
+  promptPopover.options.forEach((option) => {
+    option.addEventListener('click', async () => {
+      if (!promptPopover.currentKey) return
+      const tier = option.dataset.tier || 'light'
+      const targetField = getPromptFieldByKey(promptPopover.currentKey)
+      if (!targetField?.prompt) {
+        hidePromptPopover()
+        return
+      }
+      option.disabled = true
+      const generatedPrompt = await requestPromptGeneration({
+        tier,
+        promptKey: promptPopover.currentKey,
+      })
+      option.disabled = false
+      hidePromptPopover()
+      if (generatedPrompt) {
+        targetField.prompt.value = generatedPrompt
+      }
+    })
+  })
+
+  document.addEventListener('click', (event) => {
+    if (!promptPopover.element || promptPopover.element.hidden) return
+    if (promptPopover.element.contains(event.target)) return
+    if (event.target.closest('[data-role="prompt-insert"]')) return
+    hidePromptPopover()
+  })
+
+  window.addEventListener('scroll', () => {
+    if (!promptPopover.element || promptPopover.element.hidden) return
+    if (promptPopover.anchor && promptPopover.currentKey) {
+      showPromptPopover(promptPopover.anchor, promptPopover.currentKey)
+    }
+  })
+
+  window.addEventListener('resize', hidePromptPopover)
 }
 
 if (userProfileFields.nearStation) {

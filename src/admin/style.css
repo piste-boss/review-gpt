@@ -188,6 +188,57 @@ body {
   color: var(--text-primary);
 }
 
+.admin__prompt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.admin__prompt-popover {
+  position: absolute;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 14px 36px rgba(13, 16, 21, 0.18);
+  padding: 0.8rem 1rem;
+  width: 240px;
+  z-index: 50;
+}
+
+.admin__prompt-popover p {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.4rem;
+}
+
+.admin__prompt-popover-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.admin__prompt-popover-buttons button {
+  flex: 1;
+  min-width: 100px;
+  padding: 0.35rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #f7f7ff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.admin__prompt-popover-buttons button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .admin__hint {
   margin: 0;
   font-size: 0.95rem;
