@@ -146,6 +146,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: clamp(1.6rem, 4vw, 2.6rem);
+  padding-bottom: 7rem;
 }
 
 .admin__panel {
@@ -599,6 +600,24 @@ body {
   font-size: 1rem;
 }
 
+.admin__floating-submit {
+  position: fixed;
+  right: 32px;
+  bottom: 32px;
+  z-index: 40;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.admin__submit--floating {
+  pointer-events: auto;
+  min-width: 220px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .admin__submit:hover {
   transform: translateY(-3px);
   box-shadow: 0 40px 75px rgba(26, 44, 8, 0.24);
@@ -645,13 +664,19 @@ body {
     border-radius: 24px;
   }
 
-  .admin__actions {
-    justify-content: stretch;
-  }
-
   .admin__submit {
     width: 100%;
     text-align: center;
+  }
+
+  .admin__floating-submit {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1.5rem;
+  }
+
+  .admin__submit--floating {
+    width: 100%;
   }
 }
 

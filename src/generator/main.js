@@ -1,5 +1,11 @@
 const CONFIG_CACHE_KEY = 'oisoya_review_config_cache'
 const DEFAULT_FAVICON_PATH = '/vite.svg'
+const LAST_SUBMISSION_STORAGE_KEY = 'oisoya_review_last_submission'
+const FORM_KEY_BY_PROMPT = {
+  page1: 'form1',
+  page2: 'form2',
+  page3: 'form3',
+}
 
 const readCachedConfig = () => {
   try {
@@ -66,6 +72,35 @@ const mapsLinkEl = app.querySelector('[data-role="maps-link"]')
 const promptKey = app.dataset.promptKey || 'page1'
 const tierKey = app.dataset.tier || ''
 
+const getFormKeyForPage = () => FORM_KEY_BY_PROMPT[promptKey] || 'form1'
+
+const readLatestSubmissionInfo = () => {
+  const expectedFormKey = getFormKeyForPage()
+  const params = new URLSearchParams(window.location.search)
+  const queryTimestamp = (params.get('submittedAt') || '').trim()
+  const queryFormKey = (params.get('formKey') || '').trim()
+  const queryResponseId = (params.get('responseId') || '').trim()
+  if (queryTimestamp && (!queryFormKey || queryFormKey === expectedFormKey)) {
+    return { formKey: expectedFormKey, submittedAt: queryTimestamp, responseId: queryResponseId }
+  }
+  try {
+    const storedValue = window.sessionStorage.getItem(LAST_SUBMISSION_STORAGE_KEY)
+    if (storedValue) {
+      const parsed = JSON.parse(storedValue)
+      if (parsed?.formKey === expectedFormKey && parsed?.submittedAt) {
+        return {
+          formKey: parsed.formKey,
+          submittedAt: parsed.submittedAt,
+          responseId: parsed.responseId || '',
+        }
+      }
+    }
+  } catch {
+    // noop
+  }
+  return { formKey: expectedFormKey, submittedAt: '', responseId: '' }
+}
+
 if (!generateButton || !copyButton || !textarea || !statusEl || !mapsLinkEl) {
   throw new Error('口コミ生成画面の初期化に失敗しました。')
 }
@@ -114,10 +149,22 @@ const handleGenerate = async () => {
   toggleLoading(true)
 
   try {
+    const submissionInfo = readLatestSubmissionInfo()
+    const requestBody = {
+      promptKey,
+      tier: tierKey,
+    }
+    if (submissionInfo.submittedAt) {
+      requestBody.submissionTimestamp = submissionInfo.submittedAt
+    }
+    if (submissionInfo.responseId) {
+      requestBody.responseId = submissionInfo.responseId
+    }
+
     const response = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ promptKey, tier: tierKey }),
+      body: JSON.stringify(requestBody),
     })
 
     if (!response.ok) {

@@ -73,6 +73,7 @@ export const handler = async (event, context) => {
   }
 
   payload.metadata = { ...metadata, spreadsheetId }
+  console.log('survey-submit metadata:', payload.metadata)
 
   const surveyConfig = await getSurveyConfig(context)
   if (!surveyConfig.endpointUrl) {

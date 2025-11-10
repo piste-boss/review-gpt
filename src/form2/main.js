@@ -1,4 +1,5 @@
 const CONFIG_CACHE_KEY = 'oisoya_review_config_cache'
+const LAST_SUBMISSION_STORAGE_KEY = 'oisoya_review_last_submission'
 
 const DEFAULT_FORMS = {
   form1: {
@@ -133,6 +134,25 @@ const readCachedConfig = () => {
 const writeCachedConfig = (config) => {
   try {
     window.localStorage.setItem(CONFIG_CACHE_KEY, JSON.stringify(config))
+  } catch {
+    // noop
+  }
+}
+
+const generateResponseId = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return `resp-${Date.now()}-${Math.floor(Math.random() * 1000000)}`
+}
+
+const storeLastSubmissionInfo = (formKey, submittedAt, responseId) => {
+  if (!formKey || !submittedAt) return
+  try {
+    window.sessionStorage.setItem(
+      LAST_SUBMISSION_STORAGE_KEY,
+      JSON.stringify({ formKey, submittedAt, responseId: responseId || '' }),
+    )
   } catch {
     // noop
   }
@@ -604,12 +624,13 @@ const collectAnswers = () => {
   return { answers, answersOrdered, errors }
 }
 
-const buildSubmissionPayload = (answers, answersOrdered) => ({
+const buildSubmissionPayload = (answers, answersOrdered, submittedAt, responseId) => ({
   formKey: FORM_KEY,
   answers,
   answersOrdered,
   metadata: {
-    submittedAt: new Date().toISOString(),
+    submittedAt: submittedAt || new Date().toISOString(),
+    responseId: responseId || '',
     userAgent: window.navigator.userAgent,
     referrer: document.referrer || '',
     pageUrl: window.location.href,
@@ -617,7 +638,7 @@ const buildSubmissionPayload = (answers, answersOrdered) => ({
   },
 })
 
-const sendSurveyResults = async (answers, answersOrdered) => {
+const sendSurveyResults = async (answers, answersOrdered, submittedAt, responseId) => {
   if (!surveyResultsConfig.endpointUrl) {
     return false
   }
@@ -625,7 +646,7 @@ const sendSurveyResults = async (answers, answersOrdered) => {
   const response = await fetch('/.netlify/functions/survey-submit', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(buildSubmissionPayload(answers, answersOrdered)),
+    body: JSON.stringify(buildSubmissionPayload(answers, answersOrdered, submittedAt, responseId)),
   })
 
   if (!response.ok) {
@@ -650,13 +671,33 @@ const sendSurveyResults = async (answers, answersOrdered) => {
   return true
 }
 
-const redirectToGenerator = () => {
+const redirectToGenerator = (submittedAt, responseId) => {
   const redirectMap = {
     form1: '/generator/index.html',
     form2: '/generator/page2/index.html',
     form3: '/generator/page3/index.html',
   }
-  window.location.href = redirectMap[FORM_KEY] || '/generator/page2/index.html'
+  const basePath = redirectMap[FORM_KEY] || '/generator/page2/index.html'
+  if (!submittedAt) {
+    window.location.href = basePath
+    return
+  }
+  try {
+    const targetUrl = new URL(basePath, window.location.origin)
+    targetUrl.searchParams.set('submittedAt', submittedAt)
+    targetUrl.searchParams.set('formKey', FORM_KEY)
+    if (responseId) {
+      targetUrl.searchParams.set('responseId', responseId)
+    }
+    window.location.href = targetUrl.toString()
+  } catch {
+    const separator = basePath.includes('?') ? '&' : '?'
+    window.location.href = `${basePath}${separator}submittedAt=${encodeURIComponent(
+      submittedAt,
+    )}&formKey=${encodeURIComponent(FORM_KEY)}${
+      responseId ? `&responseId=${encodeURIComponent(responseId)}` : ''
+    }`
+  }
 }
 
 submitButton?.addEventListener('click', async () => {
@@ -670,19 +711,22 @@ submitButton?.addEventListener('click', async () => {
   isSubmitting = true
   submitButton.disabled = true
   const hasEndpoint = Boolean(surveyResultsConfig.endpointUrl)
+  const submissionTimestamp = new Date().toISOString()
+  const responseId = generateResponseId()
 
   try {
     if (hasEndpoint) {
       setStatus('アンケート結果を送信しています…')
-      await sendSurveyResults(answers, answersOrdered)
+      await sendSurveyResults(answers, answersOrdered, submissionTimestamp, responseId)
       setStatus('回答を送信しました。口コミ生成ページへ移動します。', 'success')
     } else {
       setStatus('回答を保存しました。口コミ生成ページへ移動します。', 'success')
     }
+    storeLastSubmissionInfo(FORM_KEY, submissionTimestamp, responseId)
     // eslint-disable-next-line no-console
     console.log(`${FORM_KEY} answers`, answersOrdered)
     window.setTimeout(() => {
-      redirectToGenerator()
+      redirectToGenerator(submissionTimestamp, responseId)
     }, 600)
   } catch (error) {
     console.error(error)
