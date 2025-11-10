@@ -29,6 +29,8 @@ const writeCachedConfig = (config) => {
   }
 }
 
+let loadedConfig = null
+
 const TIERS = [
   {
     key: 'beginner',
@@ -57,6 +59,16 @@ const DEFAULT_SURVEY_RESULTS = {
   spreadsheetUrl: '',
   endpointUrl: '',
   apiKey: '',
+}
+
+const DEFAULT_PROMPT_GENERATOR = {
+  geminiApi: '',
+  prompt: '',
+  references: {
+    light: '',
+    standard: '',
+    platinum: '',
+  },
 }
 
 const QR_PAGE_TARGETS = [
@@ -253,6 +265,33 @@ const promptFields = PROMPT_CONFIGS.map(({ key }) => ({
   prompt: form.elements[`prompt_${key}_prompt`],
 }))
 
+const USER_PROFILE_FIELD_COUNT = 5
+
+const createProfileFieldArray = (prefix) =>
+  Array.from({ length: USER_PROFILE_FIELD_COUNT }, (_, index) => form.elements[`${prefix}${index + 1}`])
+
+const userProfileFields = {
+  storeName: form.elements.profileStoreName,
+  storeKana: form.elements.profileStoreKana,
+  industry: form.elements.profileIndustry,
+  customers: form.elements.profileCustomers,
+  strengths: form.elements.profileStrengths,
+  keywords: createProfileFieldArray('profileKeyword'),
+  excludeWords: createProfileFieldArray('profileExcludeWord'),
+  nearStation: form.elements.profileNearStation,
+  nearStationStatus: app.querySelector('[data-role="profile-near-station-status"]'),
+}
+
+const promptGeneratorFields = {
+  geminiApi: form.elements.promptGeneratorGeminiApi,
+  prompt: form.elements.promptGeneratorPrompt,
+  references: {
+    light: form.elements.promptGeneratorReferenceLight,
+    standard: form.elements.promptGeneratorReferenceStandard,
+    platinum: form.elements.promptGeneratorReferencePlatinum,
+  },
+}
+
 const cloneQuestion = (question) => ({
   ...question,
   options: Array.isArray(question.options) ? [...question.options] : [],
@@ -268,6 +307,102 @@ const setToggleStatusText = (target, checked) => {
   if (!target) return
   target.textContent = checked ? 'ON' : 'OFF'
 }
+
+const hasUserProfileInputs = () =>
+  Boolean(
+    userProfileFields.storeName ||
+      userProfileFields.storeKana ||
+      userProfileFields.industry ||
+      userProfileFields.customers ||
+      userProfileFields.strengths ||
+      userProfileFields.keywords.some(Boolean) ||
+      userProfileFields.excludeWords.some(Boolean) ||
+      userProfileFields.nearStation,
+  )
+
+const setUserProfileValues = (profile = {}) => {
+  if (!hasUserProfileInputs()) return
+  const assign = (field, value = '') => {
+    if (field) field.value = value || ''
+  }
+
+  assign(userProfileFields.storeName, profile.storeName)
+  assign(userProfileFields.storeKana, profile.storeKana)
+  assign(userProfileFields.industry, profile.industry)
+  assign(userProfileFields.customers, profile.customers)
+  assign(userProfileFields.strengths, profile.strengths)
+
+  const keywords = Array.isArray(profile.keywords) ? profile.keywords : []
+  userProfileFields.keywords.forEach((field, index) => {
+    assign(field, keywords[index] || '')
+  })
+
+  const excludeWords = Array.isArray(profile.excludeWords) ? profile.excludeWords : []
+  userProfileFields.excludeWords.forEach((field, index) => {
+    assign(field, excludeWords[index] || '')
+  })
+
+  const nearStation = Boolean(profile.nearStation)
+  if (userProfileFields.nearStation) {
+    userProfileFields.nearStation.checked = nearStation
+  }
+  if (userProfileFields.nearStationStatus) {
+    setToggleStatusText(userProfileFields.nearStationStatus, nearStation)
+  }
+}
+
+const collectProfileListValues = (fields) =>
+  fields
+    .map((field) => (field?.value || '').trim())
+    .filter(Boolean)
+
+const getUserProfilePayload = () => {
+  if (!hasUserProfileInputs()) {
+    return { ...(loadedConfig?.userProfile || {}) }
+  }
+
+  const getValue = (field) => (field?.value || '').trim()
+
+  return {
+    storeName: getValue(userProfileFields.storeName),
+    storeKana: getValue(userProfileFields.storeKana),
+    industry: getValue(userProfileFields.industry),
+    customers: getValue(userProfileFields.customers),
+    strengths: getValue(userProfileFields.strengths),
+    keywords: collectProfileListValues(userProfileFields.keywords),
+    excludeWords: collectProfileListValues(userProfileFields.excludeWords),
+    nearStation: Boolean(userProfileFields.nearStation?.checked),
+  }
+}
+
+const setPromptGeneratorValues = (config = {}) => {
+  if (promptGeneratorFields.geminiApi) {
+    promptGeneratorFields.geminiApi.value = config.geminiApi || ''
+  }
+  if (promptGeneratorFields.prompt) {
+    promptGeneratorFields.prompt.value = config.prompt || ''
+  }
+  const references = config.references || {}
+  if (promptGeneratorFields.references.light) {
+    promptGeneratorFields.references.light.value = references.light || ''
+  }
+  if (promptGeneratorFields.references.standard) {
+    promptGeneratorFields.references.standard.value = references.standard || ''
+  }
+  if (promptGeneratorFields.references.platinum) {
+    promptGeneratorFields.references.platinum.value = references.platinum || ''
+  }
+}
+
+const getPromptGeneratorPayload = () => ({
+  geminiApi: (promptGeneratorFields.geminiApi?.value || '').trim(),
+  prompt: (promptGeneratorFields.prompt?.value || '').trim(),
+  references: {
+    light: (promptGeneratorFields.references.light?.value || '').trim(),
+    standard: (promptGeneratorFields.references.standard?.value || '').trim(),
+    platinum: (promptGeneratorFields.references.platinum?.value || '').trim(),
+  },
+})
 
 const getQrPageConfig = (key) =>
   QR_PAGE_TARGETS.find((page) => page.key === key) || QR_PAGE_TARGETS[0]
@@ -986,11 +1121,18 @@ if (brandingFields.removeButton) {
   brandingFields.removeButton.addEventListener('click', handleBrandingRemove)
 }
 
+if (userProfileFields.nearStation) {
+  userProfileFields.nearStation.addEventListener('change', () => {
+    setToggleStatusText(userProfileFields.nearStationStatus, userProfileFields.nearStation.checked)
+  })
+}
+
 if (tabButtons.length > 0) {
   activateTab(tabButtons[0].dataset.tabTarget)
 }
 
 function populateForm(config) {
+  loadedConfig = config
   TIERS.forEach(({ key, defaultLabel }) => {
     const labelInput = form.elements[`${key}Label`]
     const linksInput = form.elements[`${key}Links`]
@@ -1019,6 +1161,9 @@ function populateForm(config) {
   }
   if (aiFields.mapsLink) aiFields.mapsLink.value = ai.mapsLink || ''
   if (aiFields.model) aiFields.model.value = ai.model || ''
+
+  setUserProfileValues(config.userProfile || {})
+  setPromptGeneratorValues(config.promptGenerator || DEFAULT_PROMPT_GENERATOR)
 
   const prompts = config.prompts || {}
   promptFields.forEach(({ key, gasUrl, prompt }) => {
@@ -1094,81 +1239,125 @@ const hasInvalidUrl = (value) => {
 form.addEventListener('submit', async (event) => {
   event.preventDefault()
 
-  const payload = { labels: {}, tiers: {}, aiSettings: {}, prompts: {}, branding: {}, surveyResults: {} }
+  const payload = {
+    labels: { ...(loadedConfig?.labels || {}) },
+    tiers: { ...(loadedConfig?.tiers || {}) },
+    aiSettings: { ...(loadedConfig?.aiSettings || {}) },
+    prompts: { ...(loadedConfig?.prompts || {}) },
+    branding: { ...(loadedConfig?.branding || {}) },
+    surveyResults: {
+      ...DEFAULT_SURVEY_RESULTS,
+      ...(loadedConfig?.surveyResults || {}),
+    },
+    userProfile: { ...(loadedConfig?.userProfile || {}) },
+    promptGenerator: { ...(loadedConfig?.promptGenerator || DEFAULT_PROMPT_GENERATOR) },
+  }
+  const cloneFormConfig = (key) =>
+    loadedConfig?.[key] ? JSON.parse(JSON.stringify(loadedConfig[key])) : undefined
+  payload.form1 = cloneFormConfig('form1')
+  payload.form2 = cloneFormConfig('form2')
+  payload.form3 = cloneFormConfig('form3')
+
   const errors = []
 
   TIERS.forEach(({ key, defaultLabel }) => {
     const labelInput = form.elements[`${key}Label`]
     const linksInput = form.elements[`${key}Links`]
 
-    const labelValue = labelInput.value.trim() || defaultLabel
-    const links = parseLinks(linksInput.value)
-
-    const invalidLink = links.find(hasInvalidUrl)
-    if (invalidLink) {
-      errors.push(`${defaultLabel}リンクのURL形式が正しくありません: ${invalidLink}`)
+    if (labelInput) {
+      payload.labels[key] = labelInput.value.trim() || defaultLabel
+    } else if (!payload.labels[key]) {
+      payload.labels[key] = defaultLabel
     }
 
-    payload.labels[key] = labelValue
-    payload.tiers[key] = { links }
+    if (linksInput) {
+      const links = parseLinks(linksInput.value)
+      const invalidLink = links.find(hasInvalidUrl)
+      if (invalidLink) {
+        errors.push(`${defaultLabel}リンクのURL形式が正しくありません: ${invalidLink}`)
+      }
+      payload.tiers[key] = { links }
+    } else if (!payload.tiers[key]) {
+      payload.tiers[key] = { links: [] }
+    }
   })
 
-  const aiSettings = {
-    geminiApiKey: (aiFields.geminiApiKey?.value || '').trim(),
-    mapsLink: (aiFields.mapsLink?.value || '').trim(),
-    model: (aiFields.model?.value || '').trim(),
+  const aiSettings = { ...(payload.aiSettings || {}) }
+  if (aiFields.geminiApiKey) {
+    aiSettings.geminiApiKey = (aiFields.geminiApiKey.value || '').trim()
   }
+  if (aiFields.model) {
+    aiSettings.model = (aiFields.model.value || '').trim()
+  }
+  if (aiFields.mapsLink) {
+    aiSettings.mapsLink = (aiFields.mapsLink.value || '').trim()
 
-  if (aiSettings.mapsLink) {
-    try {
-      // eslint-disable-next-line no-new
-      new URL(aiSettings.mapsLink)
-    } catch {
-      errors.push('Googleマップリンク のURL形式が正しくありません。')
+    if (aiSettings.mapsLink) {
+      try {
+        // eslint-disable-next-line no-new
+        new URL(aiSettings.mapsLink)
+      } catch {
+        errors.push('Googleマップリンク のURL形式が正しくありません。')
+      }
     }
   }
 
   payload.aiSettings = aiSettings
 
   promptFields.forEach(({ key, gasUrl, prompt }) => {
-    const gasValue = (gasUrl?.value || '').trim()
-    const promptValue = (prompt?.value || '').trim()
+    const current = { ...(payload.prompts[key] || {}) }
     const label = PROMPT_CONFIGS.find((item) => item.key === key)?.label || key
 
-    if (gasValue) {
-      try {
-        // eslint-disable-next-line no-new
-        new URL(gasValue)
-      } catch {
-        errors.push(`${label} のGASアプリURL形式が正しくありません。`)
+    if (gasUrl) {
+      const gasValue = (gasUrl.value || '').trim()
+      if (gasValue) {
+        try {
+          // eslint-disable-next-line no-new
+          new URL(gasValue)
+        } catch {
+          errors.push(`${label} のGASアプリURL形式が正しくありません。`)
+        }
       }
+      current.gasUrl = gasValue
     }
 
-    payload.prompts[key] = {
-      gasUrl: gasValue,
-      prompt: promptValue,
+    if (prompt) {
+      current.prompt = (prompt.value || '').trim()
     }
+
+    payload.prompts[key] = current
   })
 
-  const surveyResults = {
-    spreadsheetUrl: (surveyResultsFields.spreadsheetUrl?.value || '').trim(),
-    endpointUrl: (surveyResultsFields.endpointUrl?.value || '').trim(),
-    apiKey: (surveyResultsFields.apiKey?.value || '').trim(),
+  const surveyResults = { ...(payload.surveyResults || DEFAULT_SURVEY_RESULTS) }
+  if (surveyResultsFields.spreadsheetUrl) {
+    surveyResults.spreadsheetUrl = (surveyResultsFields.spreadsheetUrl.value || '').trim()
+    if (surveyResults.spreadsheetUrl && hasInvalidUrl(surveyResults.spreadsheetUrl)) {
+      errors.push('スプレッドシートURLの形式が正しくありません。')
+    }
   }
 
-  if (surveyResults.spreadsheetUrl && hasInvalidUrl(surveyResults.spreadsheetUrl)) {
-    errors.push('スプレッドシートURLの形式が正しくありません。')
+  if (surveyResultsFields.endpointUrl) {
+    surveyResults.endpointUrl = (surveyResultsFields.endpointUrl.value || '').trim()
+    if (surveyResults.endpointUrl && hasInvalidUrl(surveyResults.endpointUrl)) {
+      errors.push('送信先API(URL)の形式が正しくありません。')
+    }
   }
 
-  if (surveyResults.endpointUrl && hasInvalidUrl(surveyResults.endpointUrl)) {
-    errors.push('送信先API(URL)の形式が正しくありません。')
+  if (surveyResultsFields.apiKey) {
+    surveyResults.apiKey = (surveyResultsFields.apiKey.value || '').trim()
   }
 
   payload.surveyResults = surveyResults
 
-  payload.branding = {
-    faviconDataUrl: getBrandingValue(),
+  if (brandingFields.dataInput) {
+    payload.branding = {
+      ...payload.branding,
+      faviconDataUrl: getBrandingValue(),
+    }
   }
+
+  payload.userProfile = getUserProfilePayload()
+  payload.promptGenerator = getPromptGeneratorPayload()
 
   surveyFormConfigs.forEach(({ key }) => {
     const manager = surveyFormManagers[key]
@@ -1198,6 +1387,7 @@ form.addEventListener('submit', async (event) => {
 
     const savedConfig = await response.json().catch(() => null)
     if (savedConfig) {
+      loadedConfig = savedConfig
       writeCachedConfig(savedConfig)
       applyBrandingToUI(savedConfig.branding?.faviconDataUrl || '')
     } else {
@@ -1211,7 +1401,10 @@ form.addEventListener('submit', async (event) => {
         form1: payload.form1,
         form2: payload.form2,
         form3: payload.form3,
+        userProfile: payload.userProfile,
+        promptGenerator: payload.promptGenerator,
       }
+      loadedConfig = fallbackConfig
       writeCachedConfig(fallbackConfig)
       applyBrandingToUI(payload.branding.faviconDataUrl)
     }

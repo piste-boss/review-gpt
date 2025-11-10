@@ -13,6 +13,7 @@ export default defineConfig({
         form1: resolve(__dirname, 'form1/index.html'),
         form2: resolve(__dirname, 'form2/index.html'),
         form3: resolve(__dirname, 'form3/index.html'),
+        user: resolve(__dirname, 'user/index.html'),
       },
     },
   },

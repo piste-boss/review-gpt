@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../src/admin/style.css" />
+    <title>ユーザー設定 | review-gpt</title>
+  </head>
+  <body>
+    <div id="admin-app">
+      <noscript>
+        <p style="padding:1rem; text-align:center;">JavaScriptを有効にしてご利用ください。</p>
+      </noscript>
+      <main class="admin">
+        <header class="admin__header">
+          <p class="admin__badge">ユーザー設定</p>
+          <h1 class="admin__title">アンケート設定</h1>
+        </header>
+        <nav class="admin__tabs" aria-label="設定メニュー">
+          <button type="button" class="admin__tab" data-tab-target="profile">ユーザー情報</button>
+          <button type="button" class="admin__tab is-active" data-tab-target="labels">トップページ</button>
+          <button type="button" class="admin__tab" data-tab-target="form1">アンケート1</button>
+          <button type="button" class="admin__tab" data-tab-target="form2">アンケート2</button>
+          <button type="button" class="admin__tab" data-tab-target="form3">アンケート3</button>
+          <button type="button" class="admin__tab" data-tab-target="prompts">AI</button>
+          <button type="button" class="admin__tab" data-tab-target="results">アンケート保存先</button>
+          <button type="button" class="admin__tab" data-tab-target="qr">QRコード作成</button>
+        </nav>
+        <form id="config-form" class="admin__form">
+          <section class="admin__panel" data-tab-panel="profile">
+            <section class="admin__card">
+              <h2>店舗情報</h2>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__field">
+                  <span class="admin__field-label">店舗名</span>
+                  <input type="text" name="profileStoreName" autocomplete="off" />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">店舗名（カタカナ）</span>
+                  <input type="text" name="profileStoreKana" autocomplete="off" />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">業種</span>
+                  <input type="text" name="profileIndustry" autocomplete="off" />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">客層</span>
+                  <input type="text" name="profileCustomers" autocomplete="off" />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">お店の強み</span>
+                  <textarea name="profileStrengths" rows="3"></textarea>
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">Googleマップリンク</span>
+                  <input type="url" name="mapsLink" autocomplete="off" />
+                </label>
+              </div>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__toggle">
+                  <span class="admin__toggle-label">駅近</span>
+                  <span class="admin__toggle-control">
+                    <input type="checkbox" name="profileNearStation" class="admin__toggle-input" />
+                    <span class="admin__toggle-track">
+                      <span class="admin__toggle-thumb"></span>
+                    </span>
+                    <span class="admin__toggle-status" data-role="profile-near-station-status">OFF</span>
+                  </span>
+                </label>
+              </div>
+            </section>
+            <section class="admin__card">
+              <h2>検索キーワード</h2>
+              <p class="admin__hint">SEO や口コミ投稿時に意識させたいワード・避けたいワードを登録します。</p>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__field">
+                  <span class="admin__field-label">検索で意識させたいワード1</span>
+                  <input type="text" name="profileKeyword1" autocomplete="off" />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">検索で意識させたいワード2</span>
+                  <input type="text" name="profileKeyword2" autocomplete="off" />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">検索で意識させたいワード3</span>
+                  <input type="text" name="profileKeyword3" autocomplete="off" />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">検索で意識させたいワード4</span>
+                  <input type="text" name="profileKeyword4" autocomplete="off" />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">検索で意識させたいワード5</span>
+                  <input type="text" name="profileKeyword5" autocomplete="off" />
+                </label>
+              </div>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__field">
+                  <span class="admin__field-label">除外ワード1</span>
+                  <input type="text" name="profileExcludeWord1" autocomplete="off" />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">除外ワード2</span>
+                  <input type="text" name="profileExcludeWord2" autocomplete="off" />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">除外ワード3</span>
+                  <input type="text" name="profileExcludeWord3" autocomplete="off" />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">除外ワード4</span>
+                  <input type="text" name="profileExcludeWord4" autocomplete="off" />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">除外ワード5</span>
+                  <input type="text" name="profileExcludeWord5" autocomplete="off" />
+                </label>
+              </div>
+            </section>
+            <section class="admin__card">
+              <h2>アイコン設定</h2>
+              <div class="admin__brand">
+                <div class="admin__brand-preview" aria-live="polite">
+                  <img src="/vite.svg" alt="現在のアイコン" width="72" height="72" data-role="favicon-preview" />
+                </div>
+                <div class="admin__brand-actions">
+                  <label class="admin__field admin__field--file">
+                    <span class="admin__field-label">アイコン画像</span>
+                    <input type="file" name="brandingFavicon" accept="image/png,image/svg+xml,image/x-icon,image/*" />
+                    <span class="admin__field-hint">100KB〜1MB程度の画像推奨です。</span>
+                  </label>
+                  <div class="admin__brand-buttons">
+                    <button type="button" class="admin__text-button" data-role="favicon-remove">画像をリセット</button>
+                  </div>
+                  <input type="hidden" name="brandingFaviconData" />
+                </div>
+              </div>
+            </section>
+          </section>
+          <section class="admin__panel is-active" data-tab-panel="labels">
+            <section class="admin__card">
+              <h2>ボタン表示設定</h2>
+              <div class="admin__fields">
+              <label class="admin__field">
+                <span class="admin__field-label">アンケート1</span>
+                <input type="text" name="beginnerLabel" placeholder="アンケート1" autocomplete="off" />
+              </label>
+              <label class="admin__field">
+                <span class="admin__field-label">アンケート2</span>
+                <input
+                  type="text"
+                  name="intermediateLabel"
+                  placeholder="アンケート2"
+                  autocomplete="off"
+                />
+              </label>
+              <label class="admin__field">
+                <span class="admin__field-label">アンケート3</span>
+                <input
+                  type="text"
+                  name="advancedLabel"
+                  placeholder="アンケート3"
+                  autocomplete="off"
+                />
+              </label>
+            </div>
+          </section>
+          </section>
+          <section class="admin__panel" data-tab-panel="form1">
+            <section class="admin__card">
+              <h2>アンケート1表示文言</h2>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__field">
+                  <span class="admin__field-label">タイトル</span>
+                  <input
+                    type="text"
+                    name="form1Title"
+                    placeholder="体験の満足度を教えてください"
+                    autocomplete="off"
+                  />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">リード文</span>
+                  <textarea
+                    name="form1Lead"
+                    rows="3"
+                    placeholder="星や選択式の設問に回答してください。内容は口コミ生成に活用されます。"
+                  ></textarea>
+                </label>
+              </div>
+            </section>
+            <section class="admin__card admin__card--questions">
+              <div class="admin__card-heading">
+                <h2>設問</h2>
+              </div>
+              <p class="admin__hint">
+                設問ごとに質問文や選択肢、回答形式（ドロップダウン / チェックボックス / テキスト入力 / 数字選択）を設定できます。数字選択では星 / 数字の表示を切り替えられます。
+              </p>
+              <div class="admin__question-list" data-role="form1-question-list"></div>
+              <div class="admin__question-actions">
+                <button type="button" class="admin__icon-button" data-role="form1-add-question">
+                  <span aria-hidden="true">＋</span>
+                  <span>設問を追加</span>
+                </button>
+              </div>
+            </section>
+          </section>
+          <section class="admin__panel" data-tab-panel="form2">
+            <section class="admin__card">
+              <h2>アンケート2表示文言</h2>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__field">
+                  <span class="admin__field-label">タイトル</span>
+                  <input
+                    type="text"
+                    name="form2Title"
+                    placeholder="体験に関するアンケートにご協力ください"
+                    autocomplete="off"
+                  />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">リード文</span>
+                  <textarea
+                    name="form2Lead"
+                    rows="3"
+                    placeholder="該当する項目を選択してください。複数回答可の設問はチェックマークで選べます。"
+                  ></textarea>
+                </label>
+              </div>
+            </section>
+            <section class="admin__card admin__card--questions">
+              <div class="admin__card-heading">
+                <h2>設問</h2>
+              </div>
+              <p class="admin__hint">
+                設問ごとに質問文や選択肢、回答形式（ドロップダウン / チェックボックス / テキスト入力 / 数字選択）を設定できます。数字選択では星 / 数字の表示を切り替えられます。
+              </p>
+              <div class="admin__question-list" data-role="form2-question-list"></div>
+              <div class="admin__question-actions">
+                <button type="button" class="admin__icon-button" data-role="form2-add-question">
+                  <span aria-hidden="true">＋</span>
+                  <span>設問を追加</span>
+                </button>
+              </div>
+            </section>
+          </section>
+          <section class="admin__panel" data-tab-panel="form3">
+            <section class="admin__card">
+              <h2>アンケート3表示文言</h2>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__field">
+                  <span class="admin__field-label">タイトル</span>
+                  <input
+                    type="text"
+                    name="form3Title"
+                    placeholder="詳細アンケートにご協力ください"
+                    autocomplete="off"
+                  />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">リード文</span>
+                  <textarea
+                    name="form3Lead"
+                    rows="3"
+                    placeholder="感じたことを詳しく教えてください。選択式・自由入力の設問があります。"
+                  ></textarea>
+                </label>
+              </div>
+            </section>
+            <section class="admin__card admin__card--questions">
+              <div class="admin__card-heading">
+                <h2>設問</h2>
+              </div>
+              <p class="admin__hint">
+                設問ごとに質問文や選択肢、回答形式（ドロップダウン / チェックボックス / テキスト入力 / 数字選択）を設定できます。数字選択では星 / 数字の表示を切り替えられます。
+              </p>
+              <div class="admin__question-list" data-role="form3-question-list"></div>
+              <div class="admin__question-actions">
+                <button type="button" class="admin__icon-button" data-role="form3-add-question">
+                  <span aria-hidden="true">＋</span>
+                  <span>設問を追加</span>
+                </button>
+              </div>
+            </section>
+          </section>
+          <section class="admin__panel" data-tab-panel="prompts">
+            <section class="admin__card">
+              <h2>プロンプト設定</h2>
+              <p class="admin__hint">
+                生成ページごとのAIへの指示内容を設定します。
+              </p>
+            </section>
+            <section class="admin__card admin__card--prompt" data-prompt-key="page1">
+              <h3 class="admin__card-subtitle">生成ページ1（初級）</h3>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__field">
+                  <span class="admin__field-label">プロンプト</span>
+                  <textarea
+                    name="prompt_page1_prompt"
+                    rows="6"
+                    placeholder="生成時に利用する指示文を入力してください。"
+                  ></textarea>
+                </label>
+              </div>
+            </section>
+            <section class="admin__card admin__card--prompt" data-prompt-key="page2">
+              <h3 class="admin__card-subtitle">生成ページ2（中級）</h3>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__field">
+                  <span class="admin__field-label">プロンプト</span>
+                  <textarea
+                    name="prompt_page2_prompt"
+                    rows="6"
+                    placeholder="生成時に利用する指示文を入力してください。"
+                  ></textarea>
+                </label>
+              </div>
+            </section>
+            <section class="admin__card admin__card--prompt" data-prompt-key="page3">
+              <h3 class="admin__card-subtitle">生成ページ3（上級）</h3>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__field">
+                  <span class="admin__field-label">プロンプト</span>
+                  <textarea
+                    name="prompt_page3_prompt"
+                    rows="6"
+                    placeholder="生成時に利用する指示文を入力してください。"
+                  ></textarea>
+                </label>
+              </div>
+            </section>
+          </section>
+          <section class="admin__panel" data-tab-panel="results">
+            <section class="admin__card admin__card--results">
+              <h2>アンケート保存先</h2>
+              <p class="admin__hint">結果を閲覧できるスプレッドシートの共有リンク（ビュー専用でも可）。管理メモ用に保存されます。</p>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__field">
+                  <span class="admin__field-label">スプレッドシートURL</span>
+                  <input
+                    type="url"
+                    name="surveySpreadsheetUrl"
+                    placeholder="https://docs.google.com/spreadsheets/d/..."
+                    autocomplete="off"
+                  />
+                </label>
+              </div>
+            </section>
+          </section>
+          <section class="admin__panel" data-tab-panel="qr">
+            <section class="admin__card admin__card--qr">
+              <h2>QRコード作成</h2>
+              <p class="admin__hint">
+                トップページ・フォームページへのQRコードを作成し、PNG/JPGでダウンロードできます。紙面掲載時の想定サイズに合わせてS/M/Lから選んでください。
+              </p>
+              <div class="admin__fields admin__fields--single admin__qr-controls">
+                <label class="admin__field">
+                  <span class="admin__field-label">対象ページ</span>
+                  <select name="qrPage">
+                    <option value="top">トップページ</option>
+                    <option value="form1">アンケート1</option>
+                    <option value="form2">アンケート2</option>
+                    <option value="form3">アンケート3</option>
+                  </select>
+                  <span class="admin__field-hint">ローカルで表示中のドメインをもとにQRコードを生成します。</span>
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">出力サイズ</span>
+                  <select name="qrSize">
+                    <option value="s">S（256px）</option>
+                    <option value="m" selected>M（512px）</option>
+                    <option value="l">L（1024px）</option>
+                  </select>
+                  <span class="admin__field-hint">印刷サイズに応じてピクセル数を選択してください。</span>
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">ファイル形式</span>
+                  <select name="qrFormat">
+                    <option value="png" selected>PNG</option>
+                    <option value="jpg">JPG</option>
+                  </select>
+                  <span class="admin__field-hint">PNGは透過背景、JPGは白背景で出力します。</span>
+                </label>
+              </div>
+              <div class="admin__qr-preview" data-role="qr-preview">
+                <p>選択内容に応じたQRコードがここに表示されます。</p>
+              </div>
+              <div class="admin__qr-actions">
+                <button type="button" class="admin__icon-button" data-role="qr-refresh">プレビュー更新</button>
+                <button type="button" class="admin__submit admin__submit--compact" data-role="qr-download">
+                  QRコードをダウンロード
+                </button>
+              </div>
+            </section>
+          </section>
+          <div class="admin__floating-submit">
+            <button type="submit" class="admin__submit admin__submit--floating">設定を保存</button>
+          </div>
+        </form>
+        <p class="admin__status" data-role="status" hidden></p>
+      </main>
+    </div>
+    <script type="module" src="../src/admin/main.js"></script>
+  </body>
+</html>
