@@ -16,7 +16,7 @@
     <title>システム設定 | review-gpt</title>
   </head>
   <body>
-    <div id="admin-app">
+    <div id="admin-app" data-app-role="admin">
       <noscript>
         <p style="padding:1rem; text-align:center;">JavaScriptを有効にしてご利用ください。</p>
       </noscript>
@@ -32,6 +32,7 @@
         </header>
         <nav class="admin__tabs" aria-label="設定メニュー">
           <button type="button" class="admin__tab is-active" data-tab-target="ai">システム設定</button>
+          <button type="button" class="admin__tab" data-tab-target="user-data">ユーザー情報</button>
           <button type="button" class="admin__tab" data-tab-target="prompt-generator">プロンプトジェネレーター</button>
         </nav>
         <form id="config-form" class="admin__form">
@@ -203,6 +204,43 @@
                   rows="4"
                   placeholder="プラチナ用の口コミサンプルを入力してください。"
                 ></textarea>
+              </label>
+            </div>
+          </section>
+        </section>
+        <section class="admin__panel" data-tab-panel="user-data">
+          <section class="admin__card">
+            <h2>ユーザー情報保存先</h2>
+            <p class="admin__hint">ユーザー設定ページの入力内容を保存／読み取りするGASやスプレッドシートを登録します。</p>
+            <div class="admin__fields admin__fields--single">
+              <label class="admin__field">
+                <span class="admin__field-label">スプレッドシートURL</span>
+                <input
+                  type="url"
+                  name="userDataSpreadsheetUrl"
+                  placeholder="https://docs.google.com/spreadsheets/d/..."
+                  autocomplete="off"
+                />
+              </label>
+              <label class="admin__field">
+                <span class="admin__field-label">ユーザー情報保存GASエンドポイント</span>
+                <input
+                  type="url"
+                  name="userDataSubmitGasUrl"
+                  placeholder="https://script.google.com/macros/s/xxxx/exec"
+                  autocomplete="off"
+                />
+                <span class="admin__field-hint">ユーザー情報を保存するWebアプリURLを登録してください。</span>
+              </label>
+              <label class="admin__field">
+                <span class="admin__field-label">ユーザー情報読み取りGAS URL</span>
+                <input
+                  type="url"
+                  name="userDataReadGasUrl"
+                  placeholder="https://script.google.com/macros/s/yyyy/exec"
+                  autocomplete="off"
+                />
+                <span class="admin__field-hint">ユーザー情報を取得するときに利用するWebアプリURLです。</span>
               </label>
             </div>
           </section>

@@ -123,6 +123,28 @@ const DEFAULT_PROMPT_GENERATOR = {
   },
 }
 
+const DEFAULT_USER_PROFILE = {
+  storeName: '',
+  storeKana: '',
+  industry: '',
+  customers: '',
+  strengths: '',
+  keywords: [],
+  excludeWords: [],
+  nearStation: false,
+  admin: {
+    name: '',
+    email: '',
+    password: '',
+  },
+}
+
+const DEFAULT_USER_DATA_SETTINGS = {
+  spreadsheetUrl: '',
+  submitGasUrl: '',
+  readGasUrl: '',
+}
+
 const sanitizeBooleanFlag = (value, fallback = false) => {
   if (typeof value === 'boolean') return value
   if (typeof value === 'number') return !Number.isNaN(value) && value !== 0
@@ -150,6 +172,35 @@ const sanitizeOptionsArray = (options) => {
     .map((option) => sanitizeString(option))
     .filter((option) => option.length > 0)
 }
+
+const sanitizeStringArray = (value) => {
+  if (!Array.isArray(value)) return []
+  return value.map((entry) => sanitizeString(entry)).filter((entry) => entry.length > 0)
+}
+
+const sanitizeAdminProfile = (admin = {}, fallback = DEFAULT_USER_PROFILE.admin) => ({
+  name: sanitizeString(admin?.name ?? fallback?.name ?? ''),
+  email: sanitizeString(admin?.email ?? fallback?.email ?? ''),
+  password: sanitizeString(admin?.password ?? fallback?.password ?? ''),
+})
+
+const sanitizeUserProfile = (profile = {}, fallback = DEFAULT_USER_PROFILE) => ({
+  storeName: sanitizeString(profile?.storeName ?? fallback?.storeName ?? ''),
+  storeKana: sanitizeString(profile?.storeKana ?? fallback?.storeKana ?? ''),
+  industry: sanitizeString(profile?.industry ?? fallback?.industry ?? ''),
+  customers: sanitizeString(profile?.customers ?? fallback?.customers ?? ''),
+  strengths: sanitizeString(profile?.strengths ?? fallback?.strengths ?? ''),
+  keywords: sanitizeStringArray(profile?.keywords ?? fallback?.keywords ?? []),
+  excludeWords: sanitizeStringArray(profile?.excludeWords ?? fallback?.excludeWords ?? []),
+  nearStation: sanitizeBooleanFlag(profile?.nearStation, fallback?.nearStation ?? false),
+  admin: sanitizeAdminProfile(profile?.admin, fallback?.admin),
+})
+
+const sanitizeUserDataSettings = (settings = {}, fallback = DEFAULT_USER_DATA_SETTINGS) => ({
+  spreadsheetUrl: sanitizeString(settings?.spreadsheetUrl ?? fallback?.spreadsheetUrl ?? ''),
+  submitGasUrl: sanitizeString(settings?.submitGasUrl ?? fallback?.submitGasUrl ?? ''),
+  readGasUrl: sanitizeString(settings?.readGasUrl ?? fallback?.readGasUrl ?? ''),
+})
 
 const sanitizeFormQuestions = (questions, fallbackQuestions = []) => {
   if (!Array.isArray(questions)) return fallbackQuestions
@@ -236,6 +287,8 @@ const DEFAULT_CONFIG = {
   },
   surveyResults: DEFAULT_SURVEY_RESULTS,
   promptGenerator: DEFAULT_PROMPT_GENERATOR,
+  userProfile: DEFAULT_USER_PROFILE,
+  userDataSettings: DEFAULT_USER_DATA_SETTINGS,
   form1: DEFAULT_FORM1,
   form2: DEFAULT_FORM2,
   form3: DEFAULT_FORM3,
@@ -361,6 +414,8 @@ const mergeWithDefault = (config = {}, fallback = DEFAULT_CONFIG) => {
   const mergedForm2 = mergeForm('form2', DEFAULT_FORM2)
   const mergedForm3 = mergeForm('form3', DEFAULT_FORM3)
   const mergedPromptGenerator = mergePromptGenerator(config.promptGenerator, fallback.promptGenerator)
+  const mergedUserProfile = sanitizeUserProfile(config.userProfile, fallback.userProfile)
+  const mergedUserDataSettings = sanitizeUserDataSettings(config.userDataSettings, fallback.userDataSettings)
 
   return {
     ...DEFAULT_CONFIG,
@@ -372,6 +427,8 @@ const mergeWithDefault = (config = {}, fallback = DEFAULT_CONFIG) => {
     branding: mergedBranding,
     surveyResults: mergedSurveyResults,
     promptGenerator: mergedPromptGenerator,
+    userProfile: mergedUserProfile,
+    userDataSettings: mergedUserDataSettings,
     form1: mergedForm1,
     form2: mergedForm2,
     form3: mergedForm3,

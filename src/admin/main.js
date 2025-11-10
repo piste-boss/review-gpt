@@ -71,6 +71,28 @@ const DEFAULT_PROMPT_GENERATOR = {
   },
 }
 
+const DEFAULT_USER_PROFILE = {
+  storeName: '',
+  storeKana: '',
+  industry: '',
+  customers: '',
+  strengths: '',
+  keywords: [],
+  excludeWords: [],
+  nearStation: false,
+  admin: {
+    name: '',
+    email: '',
+    password: '',
+  },
+}
+
+const DEFAULT_USER_DATA_SETTINGS = {
+  spreadsheetUrl: '',
+  submitGasUrl: '',
+  readGasUrl: '',
+}
+
 let promptGeneratorData = {
   hasGeminiApi: false,
   prompt: '',
@@ -237,6 +259,10 @@ if (!app) {
   throw new Error('#admin-app が見つかりません。')
 }
 
+const appRole = app.dataset.appRole || 'user'
+const isAdminApp = appRole === 'admin'
+const isUserApp = appRole === 'user'
+
 const form = app.querySelector('#config-form')
 const statusEl = app.querySelector('[data-role="status"]')
 
@@ -260,6 +286,12 @@ const surveyResultsFields = {
   spreadsheetUrl: form.elements.surveySpreadsheetUrl,
   endpointUrl: form.elements.surveyEndpointUrl,
   apiKey: form.elements.surveyApiKey,
+}
+
+const userDataFields = {
+  spreadsheetUrl: form.elements.userDataSpreadsheetUrl,
+  submitGasUrl: form.elements.userDataSubmitGasUrl,
+  readGasUrl: form.elements.userDataReadGasUrl,
 }
 
 
@@ -292,6 +324,14 @@ const userProfileFields = {
   excludeWords: createProfileFieldArray('profileExcludeWord'),
   nearStation: form.elements.profileNearStation,
   nearStationStatus: app.querySelector('[data-role="profile-near-station-status"]'),
+  admin: {
+    name: form.elements.profileAdminName,
+    email: form.elements.profileAdminEmail,
+    password: form.elements.profileAdminPassword,
+    passwordConfirm: form.elements.profileAdminPasswordConfirm,
+    toggle: form.elements.profileAdminPasswordToggle,
+    status: app.querySelector('[data-role="profile-admin-password-status"]'),
+  },
 }
 
 const promptGeneratorFields = {
@@ -332,6 +372,71 @@ const setToggleStatusText = (target, checked) => {
   target.textContent = checked ? 'ON' : 'OFF'
 }
 
+const getCurrentUserDataSettings = () => ({
+  ...DEFAULT_USER_DATA_SETTINGS,
+  ...(loadedConfig?.userDataSettings || {}),
+})
+
+const hasUserDataSyncConfig = () => {
+  const settings = getCurrentUserDataSettings()
+  return Boolean(settings.submitGasUrl && settings.spreadsheetUrl)
+}
+
+const syncUserProfileExternally = async (profile) => {
+  const settings = getCurrentUserDataSettings()
+  if (!settings.submitGasUrl || !settings.spreadsheetUrl) {
+    return { status: 'skipped' }
+  }
+
+  try {
+    const response = await fetch('/.netlify/functions/user-data-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        profile,
+        origin: window.location.href,
+        source: isUserApp ? 'user-app' : 'admin-app',
+        submittedAt: new Date().toISOString(),
+      }),
+    })
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}))
+      const message =
+        payload?.message || 'ユーザー情報の保存に失敗しました。時間をおいて再度お試しください。'
+      return { status: 'error', message }
+    }
+
+    return { status: 'success' }
+  } catch (error) {
+    console.error('Failed to sync user profile:', error)
+    return {
+      status: 'error',
+      message: 'ユーザー情報の保存に失敗しました。ネットワーク状況をご確認ください。',
+    }
+  }
+}
+
+const setPasswordFieldType = (field, type) => {
+  if (!field) return
+  try {
+    field.type = type
+  } catch {
+    // noop
+  }
+}
+
+const updateAdminPasswordVisibility = () => {
+  if (!userProfileFields.admin) return
+  const isVisible = Boolean(userProfileFields.admin.toggle?.checked)
+  const targetType = isVisible ? 'text' : 'password'
+  setPasswordFieldType(userProfileFields.admin.password, targetType)
+  setPasswordFieldType(userProfileFields.admin.passwordConfirm, targetType)
+  if (userProfileFields.admin.status) {
+    setToggleStatusText(userProfileFields.admin.status, isVisible)
+  }
+}
+
 const hasUserProfileInputs = () =>
   Boolean(
     userProfileFields.storeName ||
@@ -341,7 +446,12 @@ const hasUserProfileInputs = () =>
       userProfileFields.strengths ||
       userProfileFields.keywords.some(Boolean) ||
       userProfileFields.excludeWords.some(Boolean) ||
-      userProfileFields.nearStation,
+      userProfileFields.nearStation ||
+      (userProfileFields.admin &&
+        (userProfileFields.admin.name ||
+          userProfileFields.admin.email ||
+          userProfileFields.admin.password ||
+          userProfileFields.admin.passwordConfirm)),
   )
 
 const setUserProfileValues = (profile = {}) => {
@@ -373,6 +483,16 @@ const setUserProfileValues = (profile = {}) => {
   if (userProfileFields.nearStationStatus) {
     setToggleStatusText(userProfileFields.nearStationStatus, nearStation)
   }
+
+  const adminProfile = profile.admin || DEFAULT_USER_PROFILE.admin
+  assign(userProfileFields.admin?.name, adminProfile.name)
+  assign(userProfileFields.admin?.email, adminProfile.email)
+  assign(userProfileFields.admin?.password, adminProfile.password)
+  assign(userProfileFields.admin?.passwordConfirm, adminProfile.password)
+  if (userProfileFields.admin?.toggle) {
+    userProfileFields.admin.toggle.checked = false
+  }
+  updateAdminPasswordVisibility()
 }
 
 const collectProfileListValues = (fields) =>
@@ -382,7 +502,7 @@ const collectProfileListValues = (fields) =>
 
 const getUserProfilePayload = () => {
   if (!hasUserProfileInputs()) {
-    return { ...(loadedConfig?.userProfile || {}) }
+    return { ...(loadedConfig?.userProfile || DEFAULT_USER_PROFILE) }
   }
 
   const getValue = (field) => (field?.value || '').trim()
@@ -396,6 +516,11 @@ const getUserProfilePayload = () => {
     keywords: collectProfileListValues(userProfileFields.keywords),
     excludeWords: collectProfileListValues(userProfileFields.excludeWords),
     nearStation: Boolean(userProfileFields.nearStation?.checked),
+    admin: {
+      name: getValue(userProfileFields.admin?.name),
+      email: getValue(userProfileFields.admin?.email),
+      password: getValue(userProfileFields.admin?.password),
+    },
   }
 }
 
@@ -1286,6 +1411,15 @@ if (userProfileFields.nearStation) {
   })
 }
 
+if (userProfileFields.admin?.toggle) {
+  userProfileFields.admin.toggle.addEventListener('change', () => {
+    updateAdminPasswordVisibility()
+  })
+  updateAdminPasswordVisibility()
+} else {
+  updateAdminPasswordVisibility()
+}
+
 if (tabButtons.length > 0) {
   activateTab(tabButtons[0].dataset.tabTarget)
 }
@@ -1343,6 +1477,20 @@ function populateForm(config) {
   }
   if (surveyResultsFields.apiKey) {
     surveyResultsFields.apiKey.value = surveyResults.apiKey || ''
+  }
+
+  const userDataSettings = {
+    ...DEFAULT_USER_DATA_SETTINGS,
+    ...(config.userDataSettings || {}),
+  }
+  if (userDataFields.spreadsheetUrl) {
+    userDataFields.spreadsheetUrl.value = userDataSettings.spreadsheetUrl || ''
+  }
+  if (userDataFields.submitGasUrl) {
+    userDataFields.submitGasUrl.value = userDataSettings.submitGasUrl || ''
+  }
+  if (userDataFields.readGasUrl) {
+    userDataFields.readGasUrl.value = userDataSettings.readGasUrl || ''
   }
 
   surveyFormConfigs.forEach(({ key }) => {
@@ -1407,6 +1555,10 @@ form.addEventListener('submit', async (event) => {
     surveyResults: {
       ...DEFAULT_SURVEY_RESULTS,
       ...(loadedConfig?.surveyResults || {}),
+    },
+    userDataSettings: {
+      ...DEFAULT_USER_DATA_SETTINGS,
+      ...(loadedConfig?.userDataSettings || {}),
     },
     userProfile: { ...(loadedConfig?.userProfile || {}) },
     promptGenerator: { ...(loadedConfig?.promptGenerator || DEFAULT_PROMPT_GENERATOR) },
@@ -1508,6 +1660,30 @@ form.addEventListener('submit', async (event) => {
 
   payload.surveyResults = surveyResults
 
+  const userDataSettings = { ...(payload.userDataSettings || DEFAULT_USER_DATA_SETTINGS) }
+  if (userDataFields.spreadsheetUrl) {
+    userDataSettings.spreadsheetUrl = (userDataFields.spreadsheetUrl.value || '').trim()
+    if (userDataSettings.spreadsheetUrl && hasInvalidUrl(userDataSettings.spreadsheetUrl)) {
+      errors.push('ユーザー情報のスプレッドシートURLの形式が正しくありません。')
+    }
+  }
+
+  if (userDataFields.submitGasUrl) {
+    userDataSettings.submitGasUrl = (userDataFields.submitGasUrl.value || '').trim()
+    if (userDataSettings.submitGasUrl && hasInvalidUrl(userDataSettings.submitGasUrl)) {
+      errors.push('ユーザー情報保存GASエンドポイントのURL形式が正しくありません。')
+    }
+  }
+
+  if (userDataFields.readGasUrl) {
+    userDataSettings.readGasUrl = (userDataFields.readGasUrl.value || '').trim()
+    if (userDataSettings.readGasUrl && hasInvalidUrl(userDataSettings.readGasUrl)) {
+      errors.push('ユーザー情報読み取りGAS URLの形式が正しくありません。')
+    }
+  }
+
+  payload.userDataSettings = userDataSettings
+
   if (brandingFields.dataInput) {
     payload.branding = {
       ...payload.branding,
@@ -1516,6 +1692,13 @@ form.addEventListener('submit', async (event) => {
   }
 
   payload.userProfile = getUserProfilePayload()
+  if (userProfileFields.admin?.password && userProfileFields.admin?.passwordConfirm) {
+    const passwordValue = (userProfileFields.admin.password.value || '').trim()
+    const confirmValue = (userProfileFields.admin.passwordConfirm.value || '').trim()
+    if (passwordValue !== confirmValue) {
+      errors.push('管理者のパスワードと確認が一致しません。')
+    }
+  }
   payload.promptGenerator = getPromptGeneratorPayload()
 
   surveyFormConfigs.forEach(({ key }) => {
@@ -1557,6 +1740,7 @@ form.addEventListener('submit', async (event) => {
         prompts: payload.prompts,
         branding: payload.branding,
         surveyResults: payload.surveyResults,
+        userDataSettings: payload.userDataSettings,
         form1: payload.form1,
         form2: payload.form2,
         form3: payload.form3,
@@ -1568,7 +1752,21 @@ form.addEventListener('submit', async (event) => {
       applyBrandingToUI(payload.branding.faviconDataUrl)
     }
 
-    setStatus('設定を保存しました。', 'success')
+    let userProfileSyncResult = { status: 'skipped' }
+    if (isUserApp && hasUserDataSyncConfig()) {
+      setStatus('ユーザー情報を保存しています…')
+      userProfileSyncResult = await syncUserProfileExternally(payload.userProfile)
+      if (userProfileSyncResult.status === 'error') {
+        setStatus(userProfileSyncResult.message, 'error')
+        return
+      }
+    }
+
+    if (userProfileSyncResult.status === 'success') {
+      setStatus('設定とユーザー情報を保存しました。', 'success')
+    } else {
+      setStatus('設定を保存しました。', 'success')
+    }
   } catch (error) {
     console.error(error)
     setStatus(error.message, 'error')
