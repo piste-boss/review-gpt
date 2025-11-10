@@ -196,6 +196,7 @@ body {
   flex-wrap: wrap;
 }
 
+
 .admin__prompt-popover {
   position: absolute;
   background: #fff;
@@ -624,6 +625,27 @@ body {
   cursor: pointer;
   text-decoration: underline;
   text-decoration-thickness: 2px;
+}
+
+.admin__prompt-button {
+  font-size: 1rem;
+  padding: 0.55rem 1.3rem;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--accent-strong);
+  border-radius: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  text-decoration: none;
+  box-shadow: 0 10px 20px rgba(26, 44, 8, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+
+.admin__prompt-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 28px rgba(26, 44, 8, 0.18);
 }
 
 .admin__actions {
