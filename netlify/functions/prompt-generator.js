@@ -70,11 +70,65 @@ const extractTextFromGemini = (payload) => {
     .trim()
 }
 
-const buildInstruction = ({ basePrompt, tierLabel, referenceText, currentPrompt }) => {
+const sanitizeStringList = (value) => {
+  if (!Array.isArray(value)) return []
+  return value.map((entry) => sanitizeString(entry)).filter(Boolean)
+}
+
+const sanitizeUserProfile = (profile = {}) => ({
+  storeName: sanitizeString(profile.storeName),
+  storeKana: sanitizeString(profile.storeKana),
+  industry: sanitizeString(profile.industry),
+  customers: sanitizeString(profile.customers),
+  strengths: sanitizeString(profile.strengths),
+  keywords: sanitizeStringList(profile.keywords),
+  excludeWords: sanitizeStringList(profile.excludeWords),
+  nearStation: Boolean(profile.nearStation),
+})
+
+const buildUserProfileSummary = (profile) => {
+  if (!profile) return ''
+
+  const sections = []
+  const addSection = (label, value) => {
+    const text = sanitizeString(value)
+    if (!text) return
+    sections.push(`${label}\n${text}`)
+  }
+
+  addSection('#ビジネス****', profile.industry)
+
+  const nameParts = [profile.storeName, profile.storeKana].filter(Boolean)
+  if (nameParts.length > 0) {
+    addSection('#お店の名前', nameParts.join('/'))
+  }
+
+  addSection('#ターゲット層', profile.customers || profile.strengths)
+
+  profile.keywords.slice(0, 5).forEach((keyword, index) => {
+    addSection(`#MEOワード${index + 1}`, keyword)
+  })
+
+  profile.excludeWords.slice(0, 5).forEach((keyword, index) => {
+    addSection(`#除外ワード${index + 1}`, keyword)
+  })
+
+  if (profile.nearStation) {
+    addSection('#駅近', 'はい')
+  }
+
+  return sections.join('\n')
+}
+
+const buildInstruction = ({ basePrompt, tierLabel, referenceText, currentPrompt, userProfileSummary }) => {
   const sections = [
     basePrompt || DEFAULT_GENERATOR_PROMPT,
     `ターゲット: ${tierLabel}`,
   ]
+
+  if (userProfileSummary) {
+    sections.push(`ユーザー情報:\n${userProfileSummary}`)
+  }
 
   if (referenceText) {
     sections.push(`参考文面:\n${referenceText}`)
@@ -142,12 +196,14 @@ export const handler = async (event, context) => {
 
   const promptsConfig = storedConfig.prompts || {}
   const currentPrompt = sanitizeString(promptsConfig[promptKey]?.prompt)
+  const userProfileSummary = buildUserProfileSummary(sanitizeUserProfile(storedConfig.userProfile))
 
   const instruction = buildInstruction({
     basePrompt,
     tierLabel,
     referenceText,
     currentPrompt,
+    userProfileSummary,
   })
 
   const model = sanitizeString(storedConfig.aiSettings?.model) || DEFAULT_MODEL

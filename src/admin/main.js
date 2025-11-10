@@ -312,6 +312,10 @@ const promptPopover = {
   anchor: null,
 }
 
+if (promptPopover.element && promptPopover.element.parentElement !== document.body) {
+  document.body.appendChild(promptPopover.element)
+}
+
 const cloneQuestion = (question) => ({
   ...question,
   options: Array.isArray(question.options) ? [...question.options] : [],
