@@ -29,6 +29,29 @@ const writeCachedConfig = (config) => {
   }
 }
 
+const clearCachedConfig = () => {
+  try {
+    window.localStorage.removeItem(CONFIG_CACHE_KEY)
+  } catch {
+    // noop
+  }
+}
+
+const isHardReloadNavigation = () => {
+  if (typeof window.performance?.getEntriesByType === 'function') {
+    const [navigationEntry] = window.performance.getEntriesByType('navigation')
+    if (navigationEntry?.type === 'reload') {
+      return true
+    }
+  } else if (
+    window.performance?.navigation?.type != null &&
+    window.performance.navigation.type === window.performance.navigation.TYPE_RELOAD
+  ) {
+    return true
+  }
+  return false
+}
+
 let loadedConfig = null
 
 const TIERS = [
@@ -564,13 +587,19 @@ const setPromptGeneratorValues = (config = {}) => {
 
 const getPromptGeneratorPayload = () => {
   const payload = {
-    geminiApi: (promptGeneratorFields.geminiApi?.value || '').trim(),
+    geminiApi: '',
     prompt: (promptGeneratorFields.prompt?.value || '').trim(),
     references: {
       light: (promptGeneratorFields.references.light?.value || '').trim(),
       standard: (promptGeneratorFields.references.standard?.value || '').trim(),
       platinum: (promptGeneratorFields.references.platinum?.value || '').trim(),
     },
+  }
+  if (promptGeneratorFields.geminiApi) {
+    const geminiValue = (promptGeneratorFields.geminiApi.value || '').trim()
+    if (geminiValue && geminiValue !== '******') {
+      payload.geminiApi = geminiValue
+    }
   }
   promptGeneratorData = {
     hasGeminiApi: promptGeneratorData.hasGeminiApi || Boolean(payload.geminiApi),
@@ -1275,6 +1304,10 @@ const handleBrandingRemove = () => {
 
 const getBrandingValue = () => brandingFields.dataInput?.value?.trim() || ''
 
+if (isHardReloadNavigation()) {
+  clearCachedConfig()
+}
+
 const cachedConfig = readCachedConfig()
 if (cachedConfig) {
   populateForm(cachedConfig)
@@ -1593,10 +1626,14 @@ form.addEventListener('submit', async (event) => {
     }
   })
 
-  const aiSettings = { ...(payload.aiSettings || {}) }
-  if (aiFields.geminiApiKey) {
-    aiSettings.geminiApiKey = (aiFields.geminiApiKey.value || '').trim()
+const aiSettings = { ...(payload.aiSettings || {}) }
+aiSettings.geminiApiKey = ''
+if (aiFields.geminiApiKey) {
+  const geminiValue = (aiFields.geminiApiKey.value || '').trim()
+  if (geminiValue && geminiValue !== '******') {
+    aiSettings.geminiApiKey = geminiValue
   }
+}
   if (aiFields.model) {
     aiSettings.model = (aiFields.model.value || '').trim()
   }

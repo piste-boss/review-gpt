@@ -111,13 +111,21 @@ const extractSpreadsheetId = (url) => {
   return ''
 }
 
-const buildGasRequestUrl = (baseUrl, { spreadsheetId, formKey, submittedAt, responseId }) => {
-  const shouldAttachSpreadsheet = Boolean(spreadsheetId)
+const buildGasRequestUrl = (
+  baseUrl,
+  { spreadsheetId, surveyResultsSpreadsheetId, surveyResultsSpreadsheetUrl, formKey, submittedAt, responseId },
+) => {
+  const resolvedLegacySpreadsheetId = spreadsheetId || surveyResultsSpreadsheetId || ''
+  const shouldAttachLegacySpreadsheet = Boolean(resolvedLegacySpreadsheetId)
+  const shouldAttachNewSpreadsheetId = Boolean(surveyResultsSpreadsheetId)
+  const shouldAttachNewSpreadsheetUrl = Boolean(surveyResultsSpreadsheetUrl)
   const shouldAttachTimestamp = Boolean(submittedAt)
   const shouldAttachResponseId = Boolean(responseId)
   const shouldAttachFormKey = Boolean(formKey)
   if (
-    !shouldAttachSpreadsheet &&
+    !shouldAttachLegacySpreadsheet &&
+    !shouldAttachNewSpreadsheetId &&
+    !shouldAttachNewSpreadsheetUrl &&
     !shouldAttachTimestamp &&
     !shouldAttachResponseId &&
     !shouldAttachFormKey
@@ -126,8 +134,14 @@ const buildGasRequestUrl = (baseUrl, { spreadsheetId, formKey, submittedAt, resp
   }
   try {
     const url = new URL(baseUrl)
-    if (shouldAttachSpreadsheet) {
-      url.searchParams.set('spreadsheetId', spreadsheetId)
+    if (shouldAttachLegacySpreadsheet) {
+      url.searchParams.set('spreadsheetId', resolvedLegacySpreadsheetId)
+    }
+    if (shouldAttachNewSpreadsheetId) {
+      url.searchParams.set('surveyResultsSpreadsheetId', surveyResultsSpreadsheetId)
+    }
+    if (shouldAttachNewSpreadsheetUrl) {
+      url.searchParams.set('surveyResultsSpreadsheetUrl', surveyResultsSpreadsheetUrl)
     }
     if (shouldAttachFormKey) {
       url.searchParams.set('formKey', formKey)
@@ -142,8 +156,14 @@ const buildGasRequestUrl = (baseUrl, { spreadsheetId, formKey, submittedAt, resp
   } catch {
     const separator = baseUrl.includes('?') ? '&' : '?'
     const params = new URLSearchParams()
-    if (shouldAttachSpreadsheet) {
-      params.set('spreadsheetId', spreadsheetId)
+    if (shouldAttachLegacySpreadsheet) {
+      params.set('spreadsheetId', resolvedLegacySpreadsheetId)
+    }
+    if (shouldAttachNewSpreadsheetId) {
+      params.set('surveyResultsSpreadsheetId', surveyResultsSpreadsheetId)
+    }
+    if (shouldAttachNewSpreadsheetUrl) {
+      params.set('surveyResultsSpreadsheetUrl', surveyResultsSpreadsheetUrl)
     }
     if (shouldAttachFormKey) {
       params.set('formKey', formKey)
@@ -224,10 +244,13 @@ export const handler = async (event, context) => {
   try {
     const gasFetchUrl = buildGasRequestUrl(gasUrl, {
       spreadsheetId,
+      surveyResultsSpreadsheetId: spreadsheetId,
+      surveyResultsSpreadsheetUrl: spreadsheetUrl,
       formKey,
       submittedAt: submissionTimestamp,
       responseId,
     })
+    console.log('GAS fetch URL:', gasFetchUrl)
     const gasResponse = await fetch(gasFetchUrl)
     if (!gasResponse.ok) {
       throw new Error(`GASアプリの呼び出しに失敗しました (status: ${gasResponse.status}).`)

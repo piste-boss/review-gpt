@@ -7,6 +7,10 @@ export const config = {
 }
 
 const sanitizeString = (value) => (typeof value === 'string' ? value.trim() : '')
+const sanitizeSecretInput = (value) => {
+  const sanitized = sanitizeString(value)
+  return sanitized === '******' ? '' : sanitized
+}
 
 const DEFAULT_PROMPTS = {
   page1: { gasUrl: '', prompt: '' },
@@ -473,9 +477,9 @@ export const handler = async (event, context) => {
 
     const newConfig = mergeWithDefault(payload, existingConfig)
 
-    const incomingKey = sanitizeString(payload.aiSettings?.geminiApiKey)
+    const incomingKey = sanitizeSecretInput(payload.aiSettings?.geminiApiKey)
     newConfig.aiSettings.geminiApiKey = incomingKey || existingConfig.aiSettings.geminiApiKey || ''
-    const incomingPromptGeneratorKey = sanitizeString(payload.promptGenerator?.geminiApi)
+    const incomingPromptGeneratorKey = sanitizeSecretInput(payload.promptGenerator?.geminiApi)
     newConfig.promptGenerator.geminiApi =
       incomingPromptGeneratorKey || existingConfig.promptGenerator?.geminiApi || ''
     const timestamp = new Date().toISOString()
