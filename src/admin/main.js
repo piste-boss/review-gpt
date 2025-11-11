@@ -9,49 +9,6 @@ const DEFAULT_LABELS = {
 const DEFAULT_FAVICON_PATH = '/vite.svg'
 const MAX_FAVICON_SIZE = 1024 * 1024 // 1MBまで
 
-const CONFIG_CACHE_KEY = 'oisoya_review_config_cache'
-
-const readCachedConfig = () => {
-  try {
-    const value = window.localStorage.getItem(CONFIG_CACHE_KEY)
-    if (!value) return null
-    return JSON.parse(value)
-  } catch {
-    return null
-  }
-}
-
-const writeCachedConfig = (config) => {
-  try {
-    window.localStorage.setItem(CONFIG_CACHE_KEY, JSON.stringify(config))
-  } catch {
-    // noop
-  }
-}
-
-const clearCachedConfig = () => {
-  try {
-    window.localStorage.removeItem(CONFIG_CACHE_KEY)
-  } catch {
-    // noop
-  }
-}
-
-const isHardReloadNavigation = () => {
-  if (typeof window.performance?.getEntriesByType === 'function') {
-    const [navigationEntry] = window.performance.getEntriesByType('navigation')
-    if (navigationEntry?.type === 'reload') {
-      return true
-    }
-  } else if (
-    window.performance?.navigation?.type != null &&
-    window.performance.navigation.type === window.performance.navigation.TYPE_RELOAD
-  ) {
-    return true
-  }
-  return false
-}
-
 let loadedConfig = null
 
 const TIERS = [
@@ -367,6 +324,108 @@ const promptGeneratorFields = {
   },
 }
 
+const getStoredUserProfileValue = (key) =>
+  typeof loadedConfig?.userProfile?.[key] === 'string' ? loadedConfig.userProfile[key] : ''
+
+const getStoredUserDataSetting = (key) =>
+  typeof loadedConfig?.userDataSettings?.[key] === 'string' ? loadedConfig.userDataSettings[key] : ''
+
+const getActiveStoreName = () => {
+  const formValue = userProfileFields.storeName?.value || ''
+  if (formValue.trim()) {
+    return formValue.trim()
+  }
+  return getStoredUserProfileValue('storeName').trim()
+}
+
+const getUserDataReadGasUrl = () => {
+  const formValue = userDataFields.readGasUrl?.value || ''
+  if (formValue.trim()) {
+    return formValue.trim()
+  }
+  return getStoredUserDataSetting('readGasUrl').trim()
+}
+
+const buildUserDataReadRequestUrl = (baseUrl, storeName) => {
+  const params = new URLSearchParams({
+    storeName,
+    fields: 'summary',
+    source: 'prompt-generator',
+  })
+  try {
+    const url = new URL(baseUrl)
+    params.forEach((value, key) => {
+      url.searchParams.set(key, value)
+    })
+    return url.toString()
+  } catch {
+    const separator = baseUrl.includes('?') ? '&' : '?'
+    return `${baseUrl}${separator}${params.toString()}`
+  }
+}
+
+const extractSummariesFromPayload = (payload) => {
+  if (!Array.isArray(payload)) return []
+  return payload
+    .map((entry) => {
+      if (!entry) return ''
+      if (typeof entry === 'string') return entry.trim()
+      if (typeof entry.summary === 'string') return entry.summary.trim()
+      return ''
+    })
+    .filter(Boolean)
+}
+
+const fetchUserContextTextFromGas = async () => {
+  const readGasUrl = getUserDataReadGasUrl()
+  if (!readGasUrl) {
+    setStatus('ユーザー情報読み取りGAS URLが未設定です。', 'error')
+    return { status: 'error', text: '' }
+  }
+
+  const storeName = getActiveStoreName()
+  if (!storeName) {
+    setStatus('ユーザー情報タブの「店舗名」を入力してください。', 'error')
+    return { status: 'error', text: '' }
+  }
+
+  const requestUrl = buildUserDataReadRequestUrl(readGasUrl, storeName)
+  setStatus('ユーザー情報を取得しています…', 'info')
+
+  try {
+    const response = await fetch(requestUrl, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    })
+
+    if (!response.ok) {
+      setStatus('ユーザー情報の取得に失敗しました。時間をおいてお試しください。', 'error')
+      return { status: 'error', text: '' }
+    }
+
+    let payload = null
+    const contentType = response.headers.get('content-type') || ''
+    if (contentType.includes('application/json')) {
+      payload = await response.json().catch(() => null)
+    } else {
+      const text = await response.text()
+      try {
+        payload = JSON.parse(text)
+      } catch {
+        payload = null
+      }
+    }
+
+    const summaries = extractSummariesFromPayload(payload)
+    const text = summaries.slice(0, 5).join('\n')
+    return { status: 'success', text }
+  } catch (error) {
+    console.error('Failed to fetch user context from read GAS', error)
+    setStatus('ユーザー情報の取得に失敗しました。ネットワーク状況をご確認ください。', 'error')
+    return { status: 'error', text: '' }
+  }
+}
+
 const promptInsertButtons = Array.from(app.querySelectorAll('[data-role="prompt-insert"]'))
 const promptPopover = {
   element: app.querySelector('[data-role="prompt-popover"]'),
@@ -552,7 +611,7 @@ const setPromptGeneratorValues = (config = {}) => {
   const hasGeminiApi = Boolean(config.hasGeminiApi || config.hasPromptGeneratorGeminiApi)
   if (promptGeneratorFields.geminiApi) {
     if (hasGeminiApi) {
-      promptGeneratorFields.geminiApi.value = ''
+      promptGeneratorFields.geminiApi.value = '******'
       promptGeneratorFields.geminiApi.placeholder =
         '登録済みのキーがあります。更新する場合は新しいキーを入力'
       promptGeneratorFields.geminiApi.dataset.registered = 'true'
@@ -628,17 +687,25 @@ const showPromptPopover = (button, promptKey) => {
 
 let promptGeneratorRequestInFlight = false
 
-const requestPromptGeneration = async ({ tier, promptKey }) => {
+const requestPromptGeneration = async ({ tier, promptKey, userContext = null }) => {
   if (promptGeneratorRequestInFlight) {
     return null
   }
   promptGeneratorRequestInFlight = true
   setStatus('AIがプロンプトを生成しています…', 'info')
   try {
+    const payload = { tier, promptKey }
+    if (userContext) {
+      payload.userContext = {
+        text: typeof userContext.text === 'string' ? userContext.text : '',
+        fetched: Boolean(userContext.fetched),
+      }
+    }
+
     const response = await fetch('/.netlify/functions/prompt-generator', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tier, promptKey }),
+      body: JSON.stringify(payload),
     })
     const data = await response.json().catch(() => ({}))
     if (!response.ok) {
@@ -1304,15 +1371,6 @@ const handleBrandingRemove = () => {
 
 const getBrandingValue = () => brandingFields.dataInput?.value?.trim() || ''
 
-if (isHardReloadNavigation()) {
-  clearCachedConfig()
-}
-
-const cachedConfig = readCachedConfig()
-if (cachedConfig) {
-  populateForm(cachedConfig)
-}
-
 const setStatus = (message, type = 'info') => {
   if (!message) {
     statusEl.textContent = ''
@@ -1409,9 +1467,18 @@ if (promptInsertButtons.length > 0 && promptPopover.element) {
         return
       }
       option.disabled = true
+      const userContextResult = await fetchUserContextTextFromGas()
+      if (userContextResult.status === 'error') {
+        option.disabled = false
+        return
+      }
       const generatedPrompt = await requestPromptGeneration({
         tier,
         promptKey: promptPopover.currentKey,
+        userContext: {
+          text: userContextResult.text || '',
+          fetched: true,
+        },
       })
       option.disabled = false
       hidePromptPopover()
@@ -1476,7 +1543,7 @@ function populateForm(config) {
   const ai = config.aiSettings || {}
   if (aiFields.geminiApiKey) {
     if (ai.hasGeminiApiKey) {
-      aiFields.geminiApiKey.value = ''
+      aiFields.geminiApiKey.value = '******'
       aiFields.geminiApiKey.placeholder = '登録済みのキーがあります。更新する場合は新しいキーを入力'
       aiFields.geminiApiKey.dataset.registered = 'true'
     } else {
@@ -1547,7 +1614,6 @@ const loadConfig = async () => {
     }
     const payload = await response.json()
     populateForm(payload)
-    writeCachedConfig(payload)
     setStatus('最新の設定を読み込みました。', 'success')
   } catch (error) {
     console.error(error)
@@ -1767,7 +1833,6 @@ if (aiFields.geminiApiKey) {
     const savedConfig = await response.json().catch(() => null)
     if (savedConfig) {
       loadedConfig = savedConfig
-      writeCachedConfig(savedConfig)
       applyBrandingToUI(savedConfig.branding?.faviconDataUrl || '')
     } else {
       const fallbackConfig = {
@@ -1785,7 +1850,6 @@ if (aiFields.geminiApiKey) {
         promptGenerator: payload.promptGenerator,
       }
       loadedConfig = fallbackConfig
-      writeCachedConfig(fallbackConfig)
       applyBrandingToUI(payload.branding.faviconDataUrl)
     }
 

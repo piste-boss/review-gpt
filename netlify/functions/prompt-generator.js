@@ -13,12 +13,6 @@ const PROMPT_KEY_BY_TIER = {
 
 const VALID_PROMPT_KEYS = new Set(['page1', 'page2', 'page3'])
 
-const PROMPT_TIER_LABELS = {
-  light: 'ライトプラン',
-  standard: 'スタンダードプラン',
-  platinum: 'プラチナプラン',
-}
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST,OPTIONS',
@@ -84,6 +78,17 @@ const sanitizeUserProfile = (profile = {}) => ({
   keywords: sanitizeStringList(profile.keywords),
   excludeWords: sanitizeStringList(profile.excludeWords),
   nearStation: Boolean(profile.nearStation),
+  admin: {
+    name: sanitizeString(profile?.admin?.name),
+    email: sanitizeString(profile?.admin?.email),
+    password: sanitizeString(profile?.admin?.password),
+  },
+})
+
+const sanitizeUserDataSettings = (settings = {}) => ({
+  spreadsheetUrl: sanitizeString(settings.spreadsheetUrl),
+  submitGasUrl: sanitizeString(settings.submitGasUrl),
+  readGasUrl: sanitizeString(settings.readGasUrl),
 })
 
 const buildUserProfileSummary = (profile) => {
@@ -120,14 +125,181 @@ const buildUserProfileSummary = (profile) => {
   return sections.join('\n')
 }
 
-const buildInstruction = ({ basePrompt, tierLabel, referenceText, currentPrompt, userProfileSummary }) => {
-  const sections = [
-    basePrompt || DEFAULT_GENERATOR_PROMPT,
-    `ターゲット: ${tierLabel}`,
-  ]
+const extractSpreadsheetId = (url) => {
+  if (!url) return ''
+  const trimmed = url.trim()
+  const patterns = [/\/d\/([a-zA-Z0-9-_]+)/i, /[?&]id=([a-zA-Z0-9-_]+)/i]
+  for (const pattern of patterns) {
+    const match = trimmed.match(pattern)
+    if (match && match[1]) {
+      return match[1]
+    }
+  }
+  return ''
+}
+
+const mergeUserProfiles = (baseProfile, overrideProfile) => {
+  if (!overrideProfile) return baseProfile
+  const base = sanitizeUserProfile(baseProfile)
+  const override = sanitizeUserProfile(overrideProfile)
+  const pickArray = (baseArray, overrideArray) =>
+    Array.isArray(overrideArray) && overrideArray.length > 0 ? overrideArray : baseArray
+
+  return {
+    storeName: override.storeName || base.storeName,
+    storeKana: override.storeKana || base.storeKana,
+    industry: override.industry || base.industry,
+    customers: override.customers || base.customers,
+    strengths: override.strengths || base.strengths,
+    keywords: pickArray(base.keywords, override.keywords),
+    excludeWords: pickArray(base.excludeWords, override.excludeWords),
+    nearStation: override.nearStation || base.nearStation,
+    admin: {
+      name: override.admin?.name || base.admin?.name || '',
+      email: override.admin?.email || base.admin?.email || '',
+      password: override.admin?.password || base.admin?.password || '',
+    },
+  }
+}
+
+const buildReadGasRequestUrl = (
+  baseUrl,
+  { spreadsheetId, spreadsheetUrl, userDataSpreadsheetId, userDataSpreadsheetUrl, storeName },
+) => {
+  try {
+    const url = new URL(baseUrl)
+    if (spreadsheetId) {
+      url.searchParams.set('spreadsheetId', spreadsheetId)
+    } else if (spreadsheetUrl) {
+      url.searchParams.set('spreadsheetUrl', spreadsheetUrl)
+    }
+    if (userDataSpreadsheetId) {
+      url.searchParams.set('userDataSpreadsheetId', userDataSpreadsheetId)
+    }
+    if (userDataSpreadsheetUrl) {
+      url.searchParams.set('userDataSpreadsheetUrl', userDataSpreadsheetUrl)
+    }
+    if (storeName) {
+      url.searchParams.set('storeName', storeName)
+    }
+    url.searchParams.set('source', 'prompt-generator')
+    return url.toString()
+  } catch {
+    const params = []
+    if (spreadsheetId) {
+      params.push(`spreadsheetId=${encodeURIComponent(spreadsheetId)}`)
+    } else if (spreadsheetUrl) {
+      params.push(`spreadsheetUrl=${encodeURIComponent(spreadsheetUrl)}`)
+    }
+    if (userDataSpreadsheetId) {
+      params.push(`userDataSpreadsheetId=${encodeURIComponent(userDataSpreadsheetId)}`)
+    }
+    if (userDataSpreadsheetUrl) {
+      params.push(`userDataSpreadsheetUrl=${encodeURIComponent(userDataSpreadsheetUrl)}`)
+    }
+    if (storeName) {
+      params.push(`storeName=${encodeURIComponent(storeName)}`)
+    }
+    params.push('source=prompt-generator')
+    const separator = baseUrl.includes('?') ? '&' : '?'
+    return `${baseUrl}${params.length ? `${separator}${params.join('&')}` : ''}`
+  }
+}
+
+const requestUserDataFromGas = async (url, options = {}) => {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        Accept: 'application/json,text/plain;q=0.8,*/*;q=0.5',
+        ...(options.headers || {}),
+      },
+      ...options,
+    })
+
+    if (!response.ok) {
+      return { ok: false, status: response.status }
+    }
+
+    const contentType = response.headers.get('content-type') || ''
+    if (contentType.includes('application/json')) {
+      const payload = await response.json().catch(() => ({}))
+      const text = sanitizeString(payload.text || payload.body || payload.content || '')
+      const profile =
+        payload && typeof payload.profile === 'object' ? sanitizeUserProfile(payload.profile) : null
+      return { ok: true, text, profile }
+    }
+
+    const text = sanitizeString(await response.text())
+    return { ok: true, text, profile: null }
+  } catch (error) {
+    return { ok: false, error: error.message }
+  }
+}
+
+const fetchUserContextFromReadGas = async (settings = {}, storeName = '') => {
+  const readGasUrl = sanitizeString(settings.readGasUrl)
+  if (!readGasUrl) {
+    return { text: '', profile: null }
+  }
+
+  const spreadsheetUrl = sanitizeString(settings.spreadsheetUrl)
+  const spreadsheetId = extractSpreadsheetId(spreadsheetUrl)
+  const userDataSpreadsheetId = spreadsheetId
+  const userDataSpreadsheetUrl = spreadsheetUrl
+  const normalizedStoreName = sanitizeString(storeName)
+  const queryPayload = {
+    spreadsheetId,
+    spreadsheetUrl,
+    userDataSpreadsheetId,
+    userDataSpreadsheetUrl,
+    storeName: normalizedStoreName,
+  }
+
+  const getUrl = buildReadGasRequestUrl(readGasUrl, queryPayload)
+  const getResult = await requestUserDataFromGas(getUrl, { method: 'GET' })
+  if (getResult.ok) {
+    return { text: getResult.text, profile: getResult.profile }
+  }
+
+  const postBody = JSON.stringify({
+    ...queryPayload,
+    source: 'prompt-generator',
+  })
+
+  const postResult = await requestUserDataFromGas(readGasUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: postBody,
+  })
+
+  if (postResult.ok) {
+    return { text: postResult.text, profile: postResult.profile }
+  }
+
+  console.error('prompt-generator: failed to fetch user context from read GAS', {
+    status: getResult.status || postResult.status,
+    getError: getResult.error,
+    postError: postResult.error,
+  })
+
+  return { text: '', profile: null }
+}
+
+const buildInstruction = ({
+  basePrompt,
+  referenceText,
+  currentPrompt,
+  userProfileSummary,
+  externalUserNotes,
+}) => {
+  const sections = [basePrompt || DEFAULT_GENERATOR_PROMPT]
 
   if (userProfileSummary) {
     sections.push(`ユーザー情報:\n${userProfileSummary}`)
+  }
+
+  if (externalUserNotes) {
+    sections.push(`ユーザー情報（読み取りGAS）:\n${externalUserNotes}`)
   }
 
   if (referenceText) {
@@ -175,9 +347,14 @@ export const handler = async (event, context) => {
 
   const requestedTier = sanitizeString(payload.tier).toLowerCase()
   const tier = ['light', 'standard', 'platinum'].includes(requestedTier) ? requestedTier : 'light'
-  const tierLabel = PROMPT_TIER_LABELS[tier] || 'ライトプラン'
   const requestedPromptKey = sanitizeString(payload.promptKey)
   const promptKey = resolvePromptKey(requestedPromptKey, tier)
+  const clientUserContext =
+    payload && typeof payload.userContext === 'object' && payload.userContext
+      ? payload.userContext
+      : null
+  const clientUserContextText = sanitizeString(clientUserContext?.text)
+  const clientUserContextFetched = Boolean(clientUserContext?.fetched)
 
   const store = createStore(undefined, context)
   const storedConfig = (await store.get(CONFIG_KEY, { type: 'json' }).catch(() => null)) || {}
@@ -196,14 +373,26 @@ export const handler = async (event, context) => {
 
   const promptsConfig = storedConfig.prompts || {}
   const currentPrompt = sanitizeString(promptsConfig[promptKey]?.prompt)
-  const userProfileSummary = buildUserProfileSummary(sanitizeUserProfile(storedConfig.userProfile))
+  const userDataSettings = sanitizeUserDataSettings(storedConfig.userDataSettings || {})
+  const storedUserProfile = sanitizeUserProfile(storedConfig.userProfile)
+  let externalUserNotes = ''
+  let externalProfile = null
+  if (clientUserContextFetched) {
+    externalUserNotes = clientUserContextText
+  } else {
+    const userContext = await fetchUserContextFromReadGas(userDataSettings, storedUserProfile.storeName)
+    externalUserNotes = userContext.text
+    externalProfile = userContext.profile
+  }
+  const mergedUserProfile = mergeUserProfiles(storedUserProfile, externalProfile)
+  const userProfileSummary = buildUserProfileSummary(mergedUserProfile)
 
   const instruction = buildInstruction({
     basePrompt,
-    tierLabel,
     referenceText,
     currentPrompt,
     userProfileSummary,
+    externalUserNotes,
   })
 
   const model = sanitizeString(storedConfig.aiSettings?.model) || DEFAULT_MODEL
