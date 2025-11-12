@@ -2,8 +2,7 @@ import { createStore } from './_lib/store.js'
 
 const CONFIG_KEY = 'router-config'
 const DEFAULT_MODEL = 'gemini-1.5-flash-latest'
-const DEFAULT_GENERATOR_PROMPT =
-  'あなたは口コミ生成AIのプロンプトを設計するアシスタントです。参考文面や既存の指示を踏まえ、AIが口コミ文章を生成するための新しいプロンプトを1本だけ返してください。'
+const DEFAULT_GENERATOR_PROMPT = 'ストアに入力がない場合はエラーと出力してください。'
 
 const PROMPT_KEY_BY_TIER = {
   beginner: 'page1',
@@ -285,40 +284,7 @@ const fetchUserContextFromReadGas = async (settings = {}, storeName = '') => {
   return { text: '', profile: null }
 }
 
-const buildInstruction = ({
-  basePrompt,
-  referenceText,
-  currentPrompt,
-  userProfileSummary,
-  externalUserNotes,
-}) => {
-  const sections = [basePrompt || DEFAULT_GENERATOR_PROMPT]
-
-  if (userProfileSummary) {
-    sections.push(`ユーザー情報:\n${userProfileSummary}`)
-  }
-
-  if (externalUserNotes) {
-    sections.push(`ユーザー情報（読み取りGAS）:\n${externalUserNotes}`)
-  }
-
-  if (referenceText) {
-    sections.push(`参考文面:\n${referenceText}`)
-  }
-
-  if (currentPrompt) {
-    sections.push(`現在のプロンプト:\n${currentPrompt}`)
-  }
-
-  sections.push(
-    '出力条件:\n' +
-      '1. 日本語で 1 本のプロンプトのみを返すこと。\n' +
-      '2. 箇条書きや余計な補足、引用符は付けず、純粋な文章で返すこと。\n' +
-      '3. AI が口コミ文章を生成するときに必要なトーン、長さ、構成の指示を含めること。',
-  )
-
-  return sections.filter(Boolean).join('\n\n')
-}
+const buildInstruction = (basePrompt) => basePrompt || DEFAULT_GENERATOR_PROMPT
 
 export const config = {
   blobs: true,
@@ -365,14 +331,19 @@ export const handler = async (event, context) => {
     return jsonResponse(400, { message: 'プロンプトジェネレーターのGemini APIキーが設定されていません。' })
   }
 
-  const basePrompt = sanitizeString(promptGeneratorConfig.prompt) || DEFAULT_GENERATOR_PROMPT
+  const overrideBasePrompt = sanitizeString(payload.basePrompt)
+  const basePrompt = overrideBasePrompt || sanitizeString(promptGeneratorConfig.prompt)
+  if (!basePrompt) {
+    return jsonResponse(400, { message: 'プロンプトジェネレーターの指示が未設定です。' })
+  }
+  const incomingReferences = payload.references || {}
   const references = promptGeneratorConfig.references || {}
   const referenceText =
+    sanitizeString(incomingReferences[tier]) ||
+    sanitizeString(incomingReferences.light || incomingReferences.standard || incomingReferences.platinum || '') ||
     sanitizeString(references[tier]) ||
     sanitizeString(references.light || references.standard || references.platinum || '')
 
-  const promptsConfig = storedConfig.prompts || {}
-  const currentPrompt = sanitizeString(promptsConfig[promptKey]?.prompt)
   const userDataSettings = sanitizeUserDataSettings(storedConfig.userDataSettings || {})
   const storedUserProfile = sanitizeUserProfile(storedConfig.userProfile)
   let externalUserNotes = ''
@@ -387,13 +358,7 @@ export const handler = async (event, context) => {
   const mergedUserProfile = mergeUserProfiles(storedUserProfile, externalProfile)
   const userProfileSummary = buildUserProfileSummary(mergedUserProfile)
 
-  const instruction = buildInstruction({
-    basePrompt,
-    referenceText,
-    currentPrompt,
-    userProfileSummary,
-    externalUserNotes,
-  })
+  const instruction = buildInstruction(basePrompt)
 
   const model = sanitizeString(storedConfig.aiSettings?.model) || DEFAULT_MODEL
   const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`

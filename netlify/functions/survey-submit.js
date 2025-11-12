@@ -66,13 +66,19 @@ export const handler = async (event, context) => {
   }
 
   const metadata = typeof payload.metadata === 'object' && payload.metadata !== null ? payload.metadata : {}
-  const spreadsheetId = extractSpreadsheetId(metadata.spreadsheetUrl)
+  const spreadsheetUrl = typeof metadata.spreadsheetUrl === 'string' ? metadata.spreadsheetUrl : ''
+  const spreadsheetId = extractSpreadsheetId(spreadsheetUrl)
 
   if (!spreadsheetId) {
     return jsonResponse(400, { message: 'スプレッドシートURLの形式が正しくありません。' })
   }
 
-  payload.metadata = { ...metadata, spreadsheetId }
+  payload.metadata = {
+    ...metadata,
+    spreadsheetId,
+    surveyResultsSpreadsheetId: spreadsheetId,
+    surveyResultsSpreadsheetUrl: spreadsheetUrl,
+  }
   console.log('survey-submit metadata:', payload.metadata)
 
   const surveyConfig = await getSurveyConfig(context)

@@ -104,8 +104,10 @@ export const handler = async (event, context) => {
   }
 
   const metadata = {
-    spreadsheetId,
+    spreadsheetId, // 互換
     spreadsheetUrl: storedSpreadsheetUrl,
+    userDataSpreadsheetId: spreadsheetId,
+    userDataSpreadsheetUrl: storedSpreadsheetUrl,
     readGasUrl: sanitizeString(settings.readGasUrl || overrideMetadata.readGasUrl),
     apiKey: sanitizeString(overrideMetadata.apiKey),
     origin: sanitizeString(payload.origin),

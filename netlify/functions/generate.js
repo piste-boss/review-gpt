@@ -224,15 +224,17 @@ export const handler = async (event, context) => {
   const promptConfig = promptsConfig[promptKey] || {}
   const promptGasUrl = sanitizeString(promptConfig.gasUrl)
   const promptText = sanitizeString(promptConfig.prompt)
-
   const fallbackGasUrl = sanitizeString(aiSettings.gasUrl)
-  const fallbackPrompt = sanitizeString(aiSettings.prompt)
 
   const gasUrl = promptGasUrl || fallbackGasUrl
-  const promptForModel = promptText || fallbackPrompt
+  const promptForModel = promptText
 
   if (!gasUrl) {
     return jsonResponse(400, { message: `${promptLabel} のGASアプリURLが設定されていません。` })
+  }
+
+  if (!promptForModel) {
+    return jsonResponse(400, { message: `${promptLabel} のプロンプトが設定されていません。` })
   }
 
   const spreadsheetUrl = sanitizeString(surveyResultsConfig.spreadsheetUrl)

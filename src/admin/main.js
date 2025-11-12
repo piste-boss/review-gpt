@@ -647,13 +647,33 @@ const setPromptGeneratorValues = (config = {}) => {
 const getPromptGeneratorPayload = () => {
   const payload = {
     geminiApi: '',
-    prompt: (promptGeneratorFields.prompt?.value || '').trim(),
+    prompt: '',
     references: {
-      light: (promptGeneratorFields.references.light?.value || '').trim(),
-      standard: (promptGeneratorFields.references.standard?.value || '').trim(),
-      platinum: (promptGeneratorFields.references.platinum?.value || '').trim(),
+      light: '',
+      standard: '',
+      platinum: '',
     },
   }
+
+  if (promptGeneratorFields.prompt) {
+    payload.prompt = (promptGeneratorFields.prompt.value || '').trim()
+  } else if (typeof promptGeneratorData.prompt === 'string') {
+    payload.prompt = promptGeneratorData.prompt
+  }
+
+  const getReferenceValue = (key) => {
+    const field = promptGeneratorFields.references[key]
+    if (field) {
+      return (field.value || '').trim()
+    }
+    const existingValue = promptGeneratorData.references?.[key]
+    return typeof existingValue === 'string' ? existingValue : ''
+  }
+
+  payload.references.light = getReferenceValue('light')
+  payload.references.standard = getReferenceValue('standard')
+  payload.references.platinum = getReferenceValue('platinum')
+
   if (promptGeneratorFields.geminiApi) {
     const geminiValue = (promptGeneratorFields.geminiApi.value || '').trim()
     if (geminiValue && geminiValue !== '******') {
@@ -695,6 +715,18 @@ const requestPromptGeneration = async ({ tier, promptKey, userContext = null }) 
   setStatus('AIがプロンプトを生成しています…', 'info')
   try {
     const payload = { tier, promptKey }
+    const basePromptDraft = (promptGeneratorFields.prompt?.value || '').trim()
+    if (basePromptDraft) {
+      payload.basePrompt = basePromptDraft
+    }
+    const referenceDrafts = {
+      light: (promptGeneratorFields.references.light?.value || '').trim(),
+      standard: (promptGeneratorFields.references.standard?.value || '').trim(),
+      platinum: (promptGeneratorFields.references.platinum?.value || '').trim(),
+    }
+    if (referenceDrafts.light || referenceDrafts.standard || referenceDrafts.platinum) {
+      payload.references = referenceDrafts
+    }
     if (userContext) {
       payload.userContext = {
         text: typeof userContext.text === 'string' ? userContext.text : '',
@@ -1833,7 +1865,7 @@ if (aiFields.geminiApiKey) {
     const savedConfig = await response.json().catch(() => null)
     if (savedConfig) {
       loadedConfig = savedConfig
-      applyBrandingToUI(savedConfig.branding?.faviconDataUrl || '')
+      populateForm(savedConfig)
     } else {
       const fallbackConfig = {
         labels: payload.labels,
@@ -1850,7 +1882,7 @@ if (aiFields.geminiApiKey) {
         promptGenerator: payload.promptGenerator,
       }
       loadedConfig = fallbackConfig
-      applyBrandingToUI(payload.branding.faviconDataUrl)
+      populateForm(fallbackConfig)
     }
 
     let userProfileSyncResult = { status: 'skipped' }
