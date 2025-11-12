@@ -717,7 +717,7 @@ const requestPromptGeneration = async ({ tier, promptKey, userContext = null }) 
     return null
   }
   promptGeneratorRequestInFlight = true
-  setStatus('AIがプロンプトを生成しています…', 'info')
+  setStatus('AIがプロンプトを生成しています…', 'info', { autoHide: false })
   try {
     const payload = { tier, promptKey }
     const basePromptDraft = (promptGeneratorFields.prompt?.value || '').trim()
@@ -1427,7 +1427,8 @@ const clearStatusHideTimer = () => {
   }
 }
 
-const setStatus = (message, type = 'info') => {
+const setStatus = (message, type = 'info', options = {}) => {
+  const { autoHide = true, duration = 2000 } = options
   if (!message) {
     statusEl.textContent = ''
     statusEl.dataset.type = ''
@@ -1443,12 +1444,14 @@ const setStatus = (message, type = 'info') => {
   void statusEl.offsetWidth
   statusEl.classList.add(STATUS_VISIBLE_CLASS)
   clearStatusHideTimer()
-  statusHideTimer = setTimeout(() => {
-    statusEl.classList.remove(STATUS_VISIBLE_CLASS)
-    statusEl.textContent = ''
-    statusEl.dataset.type = ''
-    statusHideTimer = null
-  }, 2000)
+  if (autoHide) {
+    statusHideTimer = setTimeout(() => {
+      statusEl.classList.remove(STATUS_VISIBLE_CLASS)
+      statusEl.textContent = ''
+      statusEl.dataset.type = ''
+      statusHideTimer = null
+    }, duration)
+  }
 }
 
 const initializeQrControls = () => {
