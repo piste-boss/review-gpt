@@ -25,16 +25,30 @@
           <p class="admin__badge">ユーザー設定</p>
           <h1 class="admin__title">アンケート設定</h1>
         </header>
-        <nav class="admin__tabs" aria-label="設定メニュー">
-          <button type="button" class="admin__tab" data-tab-target="profile">ユーザー情報</button>
-          <button type="button" class="admin__tab is-active" data-tab-target="labels">トップページ</button>
-          <button type="button" class="admin__tab" data-tab-target="form1">アンケート1</button>
-          <button type="button" class="admin__tab" data-tab-target="form2">アンケート2</button>
-          <button type="button" class="admin__tab" data-tab-target="form3">アンケート3</button>
-          <button type="button" class="admin__tab" data-tab-target="prompts">AI</button>
-          <button type="button" class="admin__tab" data-tab-target="results">アンケート保存先</button>
-          <button type="button" class="admin__tab" data-tab-target="qr">QRコード作成</button>
-        </nav>
+        <div class="admin__menu" data-role="tab-menu-container">
+          <button
+            type="button"
+            class="admin__menu-trigger"
+            data-role="tab-menu-trigger"
+            aria-expanded="false"
+            aria-controls="user-tab-menu"
+          >
+            メニュー
+            <span class="admin__menu-icon" aria-hidden="true"></span>
+          </button>
+          <div class="admin__menu-panel" id="user-tab-menu" data-role="tab-menu" aria-hidden="true">
+            <nav class="admin__tabs" aria-label="設定メニュー">
+              <button type="button" class="admin__tab" data-tab-target="profile">ユーザー情報</button>
+              <button type="button" class="admin__tab is-active" data-tab-target="labels">トップページ</button>
+              <button type="button" class="admin__tab" data-tab-target="form1">アンケート1</button>
+              <button type="button" class="admin__tab" data-tab-target="form2">アンケート2</button>
+              <button type="button" class="admin__tab" data-tab-target="form3">アンケート3</button>
+              <button type="button" class="admin__tab" data-tab-target="prompts">AI</button>
+              <button type="button" class="admin__tab" data-tab-target="results">アンケート保存先</button>
+              <button type="button" class="admin__tab" data-tab-target="qr">QRコード作成</button>
+            </nav>
+          </div>
+        </div>
         <form id="config-form" class="admin__form">
           <section class="admin__panel" data-tab-panel="profile">
             <section class="admin__card">

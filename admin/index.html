@@ -30,11 +30,25 @@
             から調整してください。
           </p>
         </header>
-        <nav class="admin__tabs" aria-label="設定メニュー">
-          <button type="button" class="admin__tab is-active" data-tab-target="ai">システム設定</button>
-          <button type="button" class="admin__tab" data-tab-target="user-data">ユーザー情報</button>
-          <button type="button" class="admin__tab" data-tab-target="prompt-generator">プロンプトジェネレーター</button>
-        </nav>
+        <div class="admin__menu" data-role="tab-menu-container">
+          <button
+            type="button"
+            class="admin__menu-trigger"
+            data-role="tab-menu-trigger"
+            aria-expanded="false"
+            aria-controls="admin-tab-menu"
+          >
+            メニュー
+            <span class="admin__menu-icon" aria-hidden="true"></span>
+          </button>
+          <div class="admin__menu-panel" id="admin-tab-menu" data-role="tab-menu" aria-hidden="true">
+            <nav class="admin__tabs" aria-label="設定メニュー">
+              <button type="button" class="admin__tab is-active" data-tab-target="ai">システム設定</button>
+              <button type="button" class="admin__tab" data-tab-target="user-data">ユーザー情報</button>
+              <button type="button" class="admin__tab" data-tab-target="prompt-generator">プロンプトジェネレーター</button>
+            </nav>
+          </div>
+        </div>
         <form id="config-form" class="admin__form">
           <section class="admin__panel is-active" data-tab-panel="ai">
             <section class="admin__card">

@@ -245,6 +245,9 @@ const isUserApp = appRole === 'user'
 
 const form = app.querySelector('#config-form')
 const statusEl = app.querySelector('[data-role="status"]')
+const tabMenuContainer = app.querySelector('[data-role="tab-menu-container"]')
+const tabMenuTrigger = app.querySelector('[data-role="tab-menu-trigger"]')
+const tabMenu = app.querySelector('[data-role="tab-menu"]')
 const STATUS_VISIBLE_CLASS = 'admin__status--visible'
 
 if (!form || !statusEl) {
@@ -1404,6 +1407,18 @@ const handleBrandingRemove = () => {
 
 const getBrandingValue = () => brandingFields.dataInput?.value?.trim() || ''
 
+const setTabMenuState = (isOpen) => {
+  if (!tabMenu || !tabMenuTrigger) return
+  tabMenu.classList.toggle('is-open', isOpen)
+  tabMenuTrigger.setAttribute('aria-expanded', String(isOpen))
+  tabMenu.setAttribute('aria-hidden', String(!isOpen))
+}
+
+const closeTabMenu = () => {
+  if (!tabMenu?.classList.contains('is-open')) return
+  setTabMenuState(false)
+}
+
 const setStatus = (message, type = 'info') => {
   if (!message) {
     statusEl.textContent = ''
@@ -1462,8 +1477,30 @@ const activateTab = (target) => {
 tabButtons.forEach((button) => {
   button.addEventListener('click', () => {
     activateTab(button.dataset.tabTarget)
+    closeTabMenu()
   })
 })
+
+if (tabMenu && tabMenuTrigger && tabMenuContainer) {
+  setTabMenuState(false)
+
+  tabMenuTrigger.addEventListener('click', () => {
+    const isOpen = tabMenu.classList.contains('is-open')
+    setTabMenuState(!isOpen)
+  })
+
+  document.addEventListener('click', (event) => {
+    if (!tabMenuContainer.contains(event.target)) {
+      closeTabMenu()
+    }
+  })
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeTabMenu()
+    }
+  })
+}
 
 initializeQrControls()
 
