@@ -1734,11 +1734,12 @@ const hasInvalidUrl = (value) => {
 form.addEventListener('submit', async (event) => {
   event.preventDefault()
 
+  const existingPrompts = { ...(loadedConfig?.prompts || {}) }
   const payload = {
     labels: { ...(loadedConfig?.labels || {}) },
     tiers: { ...(loadedConfig?.tiers || {}) },
     aiSettings: { ...(loadedConfig?.aiSettings || {}) },
-    prompts: { ...(loadedConfig?.prompts || {}) },
+    prompts: {},
     branding: { ...(loadedConfig?.branding || {}) },
     surveyResults: {
       ...DEFAULT_SURVEY_RESULTS,
@@ -1808,10 +1809,16 @@ if (aiFields.geminiApiKey) {
   payload.aiSettings = aiSettings
 
   promptFields.forEach(({ key, gasUrl, prompt }) => {
-    const current = { ...(payload.prompts[key] || {}) }
+    const hasGasField = Boolean(gasUrl)
+    const hasPromptField = Boolean(prompt)
+    if (!hasGasField && !hasPromptField) {
+      return
+    }
+
+    const current = {}
     const label = PROMPT_CONFIGS.find((item) => item.key === key)?.label || key
 
-    if (gasUrl) {
+    if (hasGasField) {
       const gasValue = (gasUrl.value || '').trim()
       if (gasValue) {
         try {
@@ -1824,7 +1831,7 @@ if (aiFields.geminiApiKey) {
       current.gasUrl = gasValue
     }
 
-    if (prompt) {
+    if (hasPromptField) {
       current.prompt = (prompt.value || '').trim()
     }
 
@@ -1928,7 +1935,10 @@ if (aiFields.geminiApiKey) {
         labels: payload.labels,
         tiers: payload.tiers,
         aiSettings: payload.aiSettings,
-        prompts: payload.prompts,
+        prompts: {
+          ...existingPrompts,
+          ...payload.prompts,
+        },
         branding: payload.branding,
         surveyResults: payload.surveyResults,
         userDataSettings: payload.userDataSettings,
