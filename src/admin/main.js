@@ -245,6 +245,7 @@ const isUserApp = appRole === 'user'
 
 const form = app.querySelector('#config-form')
 const statusEl = app.querySelector('[data-role="status"]')
+const STATUS_VISIBLE_CLASS = 'admin__status--visible'
 
 if (!form || !statusEl) {
   throw new Error('管理画面の必須要素が見つかりません。')
@@ -1406,14 +1407,17 @@ const getBrandingValue = () => brandingFields.dataInput?.value?.trim() || ''
 const setStatus = (message, type = 'info') => {
   if (!message) {
     statusEl.textContent = ''
-    statusEl.setAttribute('hidden', '')
     statusEl.dataset.type = ''
+    statusEl.classList.remove(STATUS_VISIBLE_CLASS)
     return
   }
 
   statusEl.textContent = message
-  statusEl.removeAttribute('hidden')
   statusEl.dataset.type = type
+  statusEl.classList.remove(STATUS_VISIBLE_CLASS)
+  // Force reflow so repeated messages retrigger the transition
+  void statusEl.offsetWidth
+  statusEl.classList.add(STATUS_VISIBLE_CLASS)
 }
 
 const initializeQrControls = () => {
