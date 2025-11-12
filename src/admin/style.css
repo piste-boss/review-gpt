@@ -804,28 +804,29 @@ body {
 
 .admin__status {
   position: fixed;
-  right: 32px;
-  bottom: 32px;
+  top: 50%;
+  left: 50%;
   margin: 0;
   padding: 1rem 1.4rem;
   border-radius: 18px;
   border: 1px solid transparent;
-  background: var(--panel-muted);
+  background: rgba(255, 255, 255, 0.95);
   font-weight: 600;
   color: var(--text-primary);
-  box-shadow: 0 20px 40px rgba(26, 44, 8, 0.2);
+  box-shadow: 0 24px 60px rgba(26, 44, 8, 0.32);
   min-width: 260px;
   max-width: min(420px, calc(100% - 4rem));
-  z-index: 80;
+  z-index: 200;
   opacity: 0;
-  transform: translateY(12px) scale(0.97);
+  transform: translate(-50%, calc(-50% + 12px)) scale(0.97);
   pointer-events: none;
   transition: opacity 0.25s ease, transform 0.25s ease;
+  text-align: center;
 }
 
 .admin__status--visible {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translate(-50%, -50%) scale(1);
   pointer-events: auto;
 }
 
@@ -872,10 +873,8 @@ body {
   }
 
   .admin__status {
-    left: 1rem;
-    right: 1rem;
-    bottom: 1.25rem;
-    max-width: none;
+    width: calc(100% - 2rem);
+    max-width: 480px;
   }
 }
 

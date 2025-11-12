@@ -249,6 +249,7 @@ const tabMenuContainer = app.querySelector('[data-role="tab-menu-container"]')
 const tabMenuTrigger = app.querySelector('[data-role="tab-menu-trigger"]')
 const tabMenu = app.querySelector('[data-role="tab-menu"]')
 const STATUS_VISIBLE_CLASS = 'admin__status--visible'
+let statusHideTimer = null
 
 if (!form || !statusEl) {
   throw new Error('管理画面の必須要素が見つかりません。')
@@ -1419,11 +1420,19 @@ const closeTabMenu = () => {
   setTabMenuState(false)
 }
 
+const clearStatusHideTimer = () => {
+  if (statusHideTimer) {
+    clearTimeout(statusHideTimer)
+    statusHideTimer = null
+  }
+}
+
 const setStatus = (message, type = 'info') => {
   if (!message) {
     statusEl.textContent = ''
     statusEl.dataset.type = ''
     statusEl.classList.remove(STATUS_VISIBLE_CLASS)
+    clearStatusHideTimer()
     return
   }
 
@@ -1433,6 +1442,13 @@ const setStatus = (message, type = 'info') => {
   // Force reflow so repeated messages retrigger the transition
   void statusEl.offsetWidth
   statusEl.classList.add(STATUS_VISIBLE_CLASS)
+  clearStatusHideTimer()
+  statusHideTimer = setTimeout(() => {
+    statusEl.classList.remove(STATUS_VISIBLE_CLASS)
+    statusEl.textContent = ''
+    statusEl.dataset.type = ''
+    statusHideTimer = null
+  }, 1000)
 }
 
 const initializeQrControls = () => {
