@@ -38,6 +38,44 @@
         <form id="config-form" class="admin__form">
           <section class="admin__panel" data-tab-panel="profile">
             <section class="admin__card">
+              <h2>管理者</h2>
+              <p class="admin__hint">連絡先とパスワードを登録し、AI設定の編集権限を管理します。</p>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__field">
+                  <span class="admin__field-label">名前</span>
+                  <input type="text" name="profileAdminName" autocomplete="off" />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">メールアドレス</span>
+                  <input type="email" name="profileAdminEmail" autocomplete="off" />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">パスワード</span>
+                  <input type="password" name="profileAdminPassword" autocomplete="new-password" />
+                </label>
+                <label class="admin__field">
+                  <span class="admin__field-label">パスワード（確認）</span>
+                  <input type="password" name="profileAdminPasswordConfirm" autocomplete="new-password" />
+                </label>
+              </div>
+              <div class="admin__fields admin__fields--single">
+                <label class="admin__toggle">
+                  <span class="admin__toggle-label">パスワードを表示する</span>
+                  <span class="admin__toggle-control">
+                    <input
+                      type="checkbox"
+                      name="profileAdminPasswordToggle"
+                      class="admin__toggle-input"
+                    />
+                    <span class="admin__toggle-track">
+                      <span class="admin__toggle-thumb"></span>
+                    </span>
+                    <span class="admin__toggle-status" data-role="profile-admin-password-status">OFF</span>
+                  </span>
+                </label>
+              </div>
+            </section>
+            <section class="admin__card">
               <h2>店舗情報</h2>
               <div class="admin__fields admin__fields--single">
                 <label class="admin__field">
@@ -123,44 +161,6 @@
                 <label class="admin__field">
                   <span class="admin__field-label">除外ワード5</span>
                   <input type="text" name="profileExcludeWord5" autocomplete="off" />
-                </label>
-              </div>
-            </section>
-            <section class="admin__card">
-              <h2>管理者</h2>
-              <p class="admin__hint">連絡先とパスワードを登録し、AI設定の編集権限を管理します。</p>
-              <div class="admin__fields admin__fields--single">
-                <label class="admin__field">
-                  <span class="admin__field-label">名前</span>
-                  <input type="text" name="profileAdminName" autocomplete="off" />
-                </label>
-                <label class="admin__field">
-                  <span class="admin__field-label">メールアドレス</span>
-                  <input type="email" name="profileAdminEmail" autocomplete="off" />
-                </label>
-                <label class="admin__field">
-                  <span class="admin__field-label">パスワード</span>
-                  <input type="password" name="profileAdminPassword" autocomplete="new-password" />
-                </label>
-                <label class="admin__field">
-                  <span class="admin__field-label">パスワード（確認）</span>
-                  <input type="password" name="profileAdminPasswordConfirm" autocomplete="new-password" />
-                </label>
-              </div>
-              <div class="admin__fields admin__fields--single">
-                <label class="admin__toggle">
-                  <span class="admin__toggle-label">パスワードを表示する</span>
-                  <span class="admin__toggle-control">
-                    <input
-                      type="checkbox"
-                      name="profileAdminPasswordToggle"
-                      class="admin__toggle-input"
-                    />
-                    <span class="admin__toggle-track">
-                      <span class="admin__toggle-thumb"></span>
-                    </span>
-                    <span class="admin__toggle-status" data-role="profile-admin-password-status">OFF</span>
-                  </span>
                 </label>
               </div>
             </section>
