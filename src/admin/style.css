@@ -119,6 +119,7 @@ body {
   display: flex;
   justify-content: flex-start;
   position: relative;
+  z-index: 50;
 }
 
 .sr-only {
@@ -196,7 +197,7 @@ body {
   transform: translateY(-8px) scale(0.98);
   pointer-events: none;
   transition: opacity 0.25s ease, transform 0.25s ease;
-  z-index: 400;
+  z-index: 1000;
 }
 
 .admin__menu-panel.is-open {
