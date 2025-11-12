@@ -1448,7 +1448,7 @@ const setStatus = (message, type = 'info') => {
     statusEl.textContent = ''
     statusEl.dataset.type = ''
     statusHideTimer = null
-  }, 1000)
+  }, 2000)
 }
 
 const initializeQrControls = () => {
