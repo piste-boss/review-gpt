@@ -1738,20 +1738,27 @@ form.addEventListener('submit', async (event) => {
   event.preventDefault()
 
   const existingPrompts = { ...(loadedConfig?.prompts || {}) }
-  const payload = {
-    labels: { ...(loadedConfig?.labels || {}) },
-    tiers: { ...(loadedConfig?.tiers || {}) },
-    aiSettings: { ...(loadedConfig?.aiSettings || {}) },
-    prompts: {},
-    branding: { ...(loadedConfig?.branding || {}) },
+const canEditUserDataSettings = Boolean(
+  userDataFields.spreadsheetUrl || userDataFields.submitGasUrl || userDataFields.readGasUrl,
+)
+const existingUserDataSettings = { ...(loadedConfig?.userDataSettings || {}) }
+
+const payload = {
+  labels: { ...(loadedConfig?.labels || {}) },
+  tiers: { ...(loadedConfig?.tiers || {}) },
+  aiSettings: { ...(loadedConfig?.aiSettings || {}) },
+  prompts: {},
+  branding: { ...(loadedConfig?.branding || {}) },
     surveyResults: {
       ...DEFAULT_SURVEY_RESULTS,
       ...(loadedConfig?.surveyResults || {}),
     },
-    userDataSettings: {
-      ...DEFAULT_USER_DATA_SETTINGS,
-      ...(loadedConfig?.userDataSettings || {}),
-    },
+    userDataSettings: canEditUserDataSettings
+      ? {
+          ...DEFAULT_USER_DATA_SETTINGS,
+          ...existingUserDataSettings,
+        }
+      : undefined,
     userProfile: { ...(loadedConfig?.userProfile || {}) },
     promptGenerator: { ...(loadedConfig?.promptGenerator || DEFAULT_PROMPT_GENERATOR) },
   }
@@ -1862,29 +1869,33 @@ if (aiFields.geminiApiKey) {
 
   payload.surveyResults = surveyResults
 
-  const userDataSettings = { ...(payload.userDataSettings || DEFAULT_USER_DATA_SETTINGS) }
-  if (userDataFields.spreadsheetUrl) {
-    userDataSettings.spreadsheetUrl = (userDataFields.spreadsheetUrl.value || '').trim()
-    if (userDataSettings.spreadsheetUrl && hasInvalidUrl(userDataSettings.spreadsheetUrl)) {
-      errors.push('ユーザー情報のスプレッドシートURLの形式が正しくありません。')
+  if (canEditUserDataSettings && payload.userDataSettings) {
+    const userDataSettings = { ...payload.userDataSettings }
+    if (userDataFields.spreadsheetUrl) {
+      userDataSettings.spreadsheetUrl = (userDataFields.spreadsheetUrl.value || '').trim()
+      if (userDataSettings.spreadsheetUrl && hasInvalidUrl(userDataSettings.spreadsheetUrl)) {
+        errors.push('ユーザー情報のスプレッドシートURLの形式が正しくありません。')
+      }
     }
-  }
 
-  if (userDataFields.submitGasUrl) {
-    userDataSettings.submitGasUrl = (userDataFields.submitGasUrl.value || '').trim()
-    if (userDataSettings.submitGasUrl && hasInvalidUrl(userDataSettings.submitGasUrl)) {
-      errors.push('ユーザー情報保存GASエンドポイントのURL形式が正しくありません。')
+    if (userDataFields.submitGasUrl) {
+      userDataSettings.submitGasUrl = (userDataFields.submitGasUrl.value || '').trim()
+      if (userDataSettings.submitGasUrl && hasInvalidUrl(userDataSettings.submitGasUrl)) {
+        errors.push('ユーザー情報保存GASエンドポイントのURL形式が正しくありません。')
+      }
     }
-  }
 
-  if (userDataFields.readGasUrl) {
-    userDataSettings.readGasUrl = (userDataFields.readGasUrl.value || '').trim()
-    if (userDataSettings.readGasUrl && hasInvalidUrl(userDataSettings.readGasUrl)) {
-      errors.push('ユーザー情報読み取りGAS URLの形式が正しくありません。')
+    if (userDataFields.readGasUrl) {
+      userDataSettings.readGasUrl = (userDataFields.readGasUrl.value || '').trim()
+      if (userDataSettings.readGasUrl && hasInvalidUrl(userDataSettings.readGasUrl)) {
+        errors.push('ユーザー情報読み取りGAS URLの形式が正しくありません。')
+      }
     }
-  }
 
-  payload.userDataSettings = userDataSettings
+    payload.userDataSettings = userDataSettings
+  } else {
+    delete payload.userDataSettings
+  }
 
   if (brandingFields.dataInput) {
     payload.branding = {
@@ -1944,7 +1955,9 @@ if (aiFields.geminiApiKey) {
         },
         branding: payload.branding,
         surveyResults: payload.surveyResults,
-        userDataSettings: payload.userDataSettings,
+        userDataSettings: canEditUserDataSettings
+          ? payload.userDataSettings
+          : existingUserDataSettings,
         form1: payload.form1,
         form2: payload.form2,
         form3: payload.form3,
