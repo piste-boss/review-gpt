@@ -286,6 +286,27 @@ const fetchUserContextFromReadGas = async (settings = {}, storeName = '') => {
 
 const buildInstruction = (basePrompt) => basePrompt || DEFAULT_GENERATOR_PROMPT
 
+const buildGeneratorPrompt = ({
+  instruction,
+  referenceText,
+  userProfileSummary,
+  externalUserNotes,
+}) => {
+  const sections = [instruction].filter(Boolean)
+
+  const addSection = (label, value) => {
+    const text = sanitizeString(value)
+    if (!text) return
+    sections.push(`## ${label}\n${text}`)
+  }
+
+  addSection('参照テンプレート', referenceText)
+  addSection('店舗情報', userProfileSummary)
+  addSection('ユーザー要約', externalUserNotes)
+
+  return sections.join('\n\n')
+}
+
 export const config = {
   blobs: true,
 }
@@ -359,6 +380,12 @@ export const handler = async (event, context) => {
   const userProfileSummary = buildUserProfileSummary(mergedUserProfile)
 
   const instruction = buildInstruction(basePrompt)
+  const generatorPrompt = buildGeneratorPrompt({
+    instruction,
+    referenceText,
+    userProfileSummary,
+    externalUserNotes,
+  })
 
   const model = sanitizeString(storedConfig.aiSettings?.model) || DEFAULT_MODEL
   const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`
@@ -371,7 +398,7 @@ export const handler = async (event, context) => {
         contents: [
           {
             role: 'user',
-            parts: [{ text: instruction }],
+            parts: [{ text: generatorPrompt }],
           },
         ],
       }),
